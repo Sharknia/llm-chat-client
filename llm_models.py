@@ -43,8 +43,8 @@ class GrokModels(LlmModels):
         model_enum: LLMModelListEnum = None,
     ):
         if model_enum is None:
-            model_enum = self.model_enum.GROK2_1212
-        return model_enum.value
+            model_enum = self.model_enum.GROK2_1212.value
+        return model_enum
 
     def get_base_url(self):
         return self.base_url

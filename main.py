@@ -1,27 +1,20 @@
-from openai import OpenAI
+from chat_client import ChatClient
+from llm_models import GrokModels
 
-from models import GrokModels
+messages = [
+    {
+        "role": "system",
+        "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy.",
+    },
+    {
+        "role": "user",
+        "content": "What is the meaning of life, the universe, and everything?",
+    },
+]
 
-model = GrokModels()
-
-client = OpenAI(
-  api_key=model.get_api_key(),
-  base_url="https://api.x.ai/v1",
+chat_client = ChatClient(
+    llm_model=GrokModels(),
+    messages=messages,
 )
-
-
-completion = client.chat.completions.create(
-    model=model.grok2,
-    messages=[
-        {
-            "role": "system",
-            "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."
-        },
-        {
-            "role": "user",
-            "content": "What is the meaning of life, the universe, and everything?"
-        },
-    ],
-)
-
-print(completion.choices[0].message.content)
+result = chat_client.get_completion()
+print(result)

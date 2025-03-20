@@ -19,10 +19,15 @@ class ChatClient:
         )
 
     def get_completion(self):
-        completion = self.client.chat.completions.create(
-            model=self.llm_model_name, messages=self.messages
-        )
-        return completion.choices[0].message.content
+        try:
+            completion = self.client.chat.completions.create(
+                model=self.llm_model_name,
+                messages=self.messages,
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            print("예외가 발생했습니다:", e)
+            return f"예외가 발생했습니다: {e}"
 
 
 # # Example usage
