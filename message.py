@@ -1,7 +1,20 @@
-from chat_client import ChatClient
-from llm_models import GrokModels
-from message import Message, RoleEnum
+from enum import Enum
 
+from pydantic import BaseModel
+
+
+class RoleEnum(str, Enum):
+    system = "system"
+    user = "user"
+    assistant = "assistant"
+
+
+class Message(BaseModel):
+    role: RoleEnum
+    content: str
+
+
+# 사용 예시
 messages = [
     Message(
         role=RoleEnum.system,
@@ -11,11 +24,5 @@ messages = [
         role=RoleEnum.user,
         content="What is the meaning of life, the universe, and everything?",
     ),
+    Message(role=RoleEnum.assistant, content="42"),
 ]
-
-chat_client = ChatClient(
-    llm_model=GrokModels(),
-    messages=messages,
-)
-result = chat_client.get_completion()
-print(result)
