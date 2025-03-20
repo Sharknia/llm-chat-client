@@ -28,21 +28,3 @@ class ChatClient:
         except Exception as e:
             print("예외가 발생했습니다:", e)
             return f"예외가 발생했습니다: {e}"
-
-
-# # Example usage
-# if __name__ == "__main__":
-#     model = GrokModels()
-#     messages = [
-#         {
-#             "role": "system",
-#             "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."
-#         },
-#         {
-#             "role": "user",
-#             "content": "What is the meaning of life, the universe, and everything?"
-#         },
-#     ]
-
-#     chat_client = ChatClient(model, model.grok2, messages)
-#     print(chat_client.get_completion())
