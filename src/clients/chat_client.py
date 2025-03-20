@@ -1,6 +1,6 @@
 from openai import OpenAI
 
-from llm_models import LLMModelListEnum, LlmModels
+from src.llm.llm_models import LLMModelListEnum, LlmModels
 
 
 class ChatClient:
