@@ -16,3 +16,17 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",  # 코드 스타일 검사 (PEP 8)
+    "F",  # 실행 오류 가능성 감지 (Pyflakes)
+    "UP", # 최신 Python 문법으로 변환 (pyupgrade)
+    "B",  # 잠재적 버그 감지 (flake8-bugbear)
+    "SIM", # 불필요한 복잡한 코드 감지 (flake8-simplify)
+    "I",  # Import 정리 (isort)
+    "W", # 경고
+]
