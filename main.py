@@ -1,21 +1,13 @@
 from chat_client import ChatClient
 from llm_models import GrokModels
-from message import Message, RoleEnum
+from message_list import MessageList
 
-messages = [
-    Message(
-        role=RoleEnum.system,
-        content="You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy.",
-    ),
-    Message(
-        role=RoleEnum.user,
-        content="What is the meaning of life, the universe, and everything?",
-    ),
-]
+message_list = MessageList()
 
 chat_client = ChatClient(
     llm_model=GrokModels(),
-    messages=messages,
+    messages=message_list.get_messages(),
 )
+
 result = chat_client.get_completion()
 print(result)
