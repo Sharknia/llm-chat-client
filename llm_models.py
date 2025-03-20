@@ -8,12 +8,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class ModelListEnum(enum.Enum):
+class LLMModelListEnum(enum.Enum):
     GROK2_VISION_1212 = "grok-2-vision-1212"
     GROK2_1212 = "grok-2-1212"
 
 
-class Models(ABC):
+class LlmModels(ABC):
     @abstractmethod
     def get_api_key(self):
         pass
@@ -21,7 +21,7 @@ class Models(ABC):
     @abstractmethod
     def get_model(
         self,
-        model_enum: ModelListEnum = None,
+        model_enum: LLMModelListEnum = None,
     ):
         pass
 
@@ -30,9 +30,9 @@ class Models(ABC):
         pass
 
 
-class GrokModels(Models):
+class GrokModels(LlmModels):
     api_key = os.getenv("GROK_API_KEY", "null")
-    model_enum = ModelListEnum
+    model_enum = LLMModelListEnum
     base_url = "https://api.x.ai/v1"
 
     def get_api_key(self):
@@ -40,7 +40,7 @@ class GrokModels(Models):
 
     def get_model(
         self,
-        model_enum: ModelListEnum = None,
+        model_enum: LLMModelListEnum = None,
     ):
         if model_enum is None:
             model_enum = self.model_enum.GROK2_1212
