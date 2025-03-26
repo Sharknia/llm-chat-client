@@ -1,6 +1,6 @@
-from src.clients.chat_client import ChatClient
-from src.llm.llm_models import GrokModels
-from src.models.message_list import MessageList
+from app.src.clients.chat_client import ChatClient
+from app.src.llm.llm_models import GrokModels
+from app.src.models.message_list import MessageList
 
 message_list = MessageList()
 
