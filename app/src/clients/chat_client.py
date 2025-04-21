@@ -33,6 +33,7 @@ class ChatClient:
                 if chunk.choices[0].finish_reason == "stop":
                     break
                 if chunk.choices[0].delta.content is not None:
-                    print(chunk.choices[0].delta.content, end="", flush=True)
+                    yield chunk.choices[0].delta.content
         except Exception as e:
-            return f"예외가 발생했습니다: {e}"
+            print(f"An exception occurred during stream generation: {e}")
+            raise
