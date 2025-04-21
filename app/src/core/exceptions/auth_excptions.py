@@ -53,6 +53,13 @@ class AuthErrors:
         detail="Email is not verified",
     )
 
+    # 비활성 사용자 오류
+    USER_NOT_ACTIVE = BaseHTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        description="Unauthorized",
+        detail="User account is not active",
+    )
+
     # 비밀번호 불일치 오류
     INVALID_PASSWORD = BaseHTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

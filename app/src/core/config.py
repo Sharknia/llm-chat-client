@@ -11,12 +11,15 @@ class Settings(BaseSettings):
 
     # JWT 비밀 키 (나중에 인증 추가 시 사용)
     SECRET_KEY: str = "a_very_secret_key_that_should_be_changed"
+    REFRESH_TOKEN_SECRET_KEY: str
+    EMAIL_SECRET_KEY: str
+    PASSWORD_SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # 개발/운영 환경 구분 (선택 사항)
-    ENVIRONMENT: str = "development"  # 예: development, production
-    DEBUG: bool = True  # 기본적으로 디버그 모드 활성화
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
 
     class Config:
         # .env 파일 경로 명시 (기본값은 프로젝트 루트의 .env)
