@@ -71,7 +71,6 @@ class GrokModels(LlmModels):
         temperature: float,
         max_tokens: int,
         top_p: float,
-        **kwargs: Any,
     ) -> Generator[str, None, None]:
         # Grok은 OpenAI 형식을 따르므로 메시지를 dict로 변환
         formatted_messages = [msg.model_dump() for msg in messages]
@@ -83,7 +82,6 @@ class GrokModels(LlmModels):
                 max_tokens=max_tokens,
                 top_p=top_p,
                 stream=True,
-                **kwargs,  # Grok API에서 지원하는 다른 파라미터 (예: frequency_penalty)
             )
             for chunk in stream:
                 if (
@@ -145,7 +143,6 @@ class GeminiModels(LlmModels):
         temperature: float,
         max_tokens: int,
         top_p: float,
-        **kwargs: Any,
     ) -> Generator[str, None, None]:
         # 시스템 명령어 추출 및 사용자/어시스턴트 메시지 분리
         system_instruction = self._extract_system_instruction(messages)
@@ -158,7 +155,13 @@ class GeminiModels(LlmModels):
 
         try:
             # config 생성 시 추출된 system_instruction 사용
-            config = types.GenerateContentConfig(system_instruction=system_instruction)
+            config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                max_output_tokens=max_tokens,
+                temperature=temperature,
+                topP=top_p,
+            )
+
             stream = self.client.models.generate_content_stream(
                 model=model_name,
                 contents=gemini_contents,

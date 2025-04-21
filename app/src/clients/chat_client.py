@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from typing import Any
 
 from app.src.llm.llm_models import LlmModels
 from app.src.models.message import Message
@@ -18,10 +17,9 @@ class ChatClient:
 
     def get_completion_stream(
         self,
-        temperature: float = 1.0,
+        temperature: float = 1.2,
         max_tokens: int = 2500,
         top_p: float = 0.95,
-        **kwargs: Any,
     ) -> Generator[str, None, None]:
         """LLM 모델 객체에 스트리밍 생성을 위임하고 결과를 yield합니다."""
         try:
@@ -31,7 +29,6 @@ class ChatClient:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
-                **kwargs,
             )
             yield from stream
 
