@@ -12,8 +12,8 @@ async def create_user(
     nickname: str,
     email: str,
     hashed_password: str,
-    auth_level: AuthLevel = AuthLevel.USER,  # 기본값 설정
-    is_active: bool = False,  # 기본값 설정
+    auth_level: AuthLevel = AuthLevel.USER,
+    is_active: bool = False,
 ) -> User:
     """새로운 사용자를 생성합니다."""
     new_user = User(
