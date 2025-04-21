@@ -106,7 +106,15 @@ body {
     flex-direction: column;
     height: 100vh;
     background-color: #ffffff;
-    position: relative; /* 토글 버튼 위치 기준 */
+    position: relative; /* 하위 절대 위치 요소 기준 */
+}
+
+#chat-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
 }
 
 #chatbox {
@@ -207,10 +215,10 @@ button:hover {
 }
 
 #sidebar-toggle {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 10; /* 다른 요소 위에 표시 */
+    /* position: absolute; 제거 -> header 내부에 배치 */
+    /* top: 10px; */
+    /* left: 10px; */
+    z-index: 10;
     background: #f8f9fa;
     border: 1px solid #dee2e6;
     color: #495057;
@@ -218,6 +226,7 @@ button:hover {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s;
+    margin-right: 15px; /* 모델 선택기와 간격 */
 }
 
 #sidebar-toggle:hover {
@@ -225,10 +234,12 @@ button:hover {
 }
 
 #model-selector-area {
-    padding: 10px 20px;
-    border-bottom: 1px solid #e9ecef;
-    background-color: #f8f9fa;
-    text-align: center; /* 가운데 정렬 (선택 사항) */
+    /* padding: 10px 20px; 제거 -> header 패딩 사용 */
+    /* border-bottom: 1px solid #e9ecef; 제거 */
+    /* background-color: #f8f9fa; 제거 */
+    /* text-align: center; 제거 */
+    margin-left: auto; /* 가운데 정렬 효과 */
+    margin-right: auto;
 }
 
 #model-selector {
@@ -238,4 +249,65 @@ button:hover {
     font-size: 14px;
     min-width: 200px; /* 최소 너비 */
     cursor: pointer;
+}
+
+#user-profile-area {
+    position: relative; /* 드롭다운 위치 기준 */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-left: auto; /* 오른쪽 끝으로 밀기 */
+}
+
+/* #profile-image 스타일 제거 */
+
+#profile-icon {
+    /* Font Awesome 아이콘 스타일 */
+    font-size: 28px; /* 아이콘 크기 */
+    color: #adb5bd; /* 아이콘 색상 (회색 계열) */
+    margin-right: 8px;
+    line-height: 1; /* 아이콘 세로 정렬 */
+}
+
+#user-nickname {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    margin-right: 5px; /* 드롭다운 화살표 공간 (선택사항) */
+}
+
+.dropdown-content {
+    display: none; /* 기본 숨김 */
+    position: absolute;
+    top: 100%; /* 프로필 영역 바로 아래 */
+    right: 0;
+    background-color: #ffffff;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 5px;
+    overflow: hidden; /* 내부 요소 경계 처리 */
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    transition: background-color 0.1s;
+}
+
+.dropdown-content a i {
+    margin-right: 10px;
+    width: 15px; /* 아이콘 너비 고정 */
+    text-align: center;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown-content.show {
+    display: block; /* 보이기 */
 }

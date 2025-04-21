@@ -4,6 +4,8 @@ const appLayout = document.getElementById('app-layout'); // 앱 레이아웃 요
 const sidebarToggle = document.getElementById('sidebar-toggle'); // 사이드바 토글 버튼
 const newChatButton = document.getElementById('new-chat-button'); // 새 채팅 버튼
 const modelSelector = document.getElementById('model-selector'); // 모델 선택 드롭다운
+const userProfileArea = document.getElementById('user-profile-area'); // 사용자 프로필 영역
+const profileDropdown = document.getElementById('profile-dropdown'); // 프로필 드롭다운
 
 // WebSocket 연결 및 메시지 처리는 나중에 추가됩니다.
 let ws;
@@ -59,6 +61,36 @@ modelSelector.addEventListener('change', (event) => {
     console.log('Model selected:', selectedModel);
     // TODO: 선택된 모델을 서버로 전달하거나 관련 로직 처리
     addMessageToChatbox(`모델이 ${selectedModel}(으)로 변경되었습니다. (실제 적용 로직 필요)`, 'assistant');
+});
+
+// 사용자 프로필 영역 클릭 이벤트 리스너 (드롭다운 토글)
+userProfileArea.addEventListener('click', (event) => {
+    profileDropdown.classList.toggle('show');
+    event.stopPropagation(); // 이벤트 버블링 방지
+});
+
+// 드롭다운 메뉴 항목 이벤트 리스너 (현재는 콘솔 로그만)
+document.getElementById('settings-button').addEventListener('click', (event) => {
+    event.preventDefault(); // 기본 링크 동작 방지
+    console.log('Settings clicked!');
+    profileDropdown.classList.remove('show'); // 메뉴 닫기
+    // TODO: 설정 관련 로직 구현
+});
+
+document.getElementById('logout-button').addEventListener('click', (event) => {
+    event.preventDefault(); // 기본 링크 동작 방지
+    console.log('Logout clicked!');
+    profileDropdown.classList.remove('show'); // 메뉴 닫기
+    // TODO: 로그아웃 관련 로직 구현
+});
+
+// 드롭다운 외부 클릭 시 메뉴 닫기
+window.addEventListener('click', (event) => {
+    if (!userProfileArea.contains(event.target)) {
+        if (profileDropdown.classList.contains('show')) {
+            profileDropdown.classList.remove('show');
+        }
+    }
 });
 
 // TODO: WebSocket 연결 및 서버로부터 메시지 수신 로직 추가

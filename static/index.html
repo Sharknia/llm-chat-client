@@ -31,20 +31,32 @@
             </div>
             <div id="chat-area">
                 <!-- 기존 채팅 영역 래퍼 -->
-                <button id="sidebar-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div id="model-selector-area">
-                    <select id="model-selector">
-                        <optgroup label="Grok">
-                            <option value="grok-3-latest">Grok 3 Latest</option>
-                            <option value="grok-3-mini-beta">Grok 3 Mini Beta</option>
-                        </optgroup>
-                        <optgroup label="Gemini">
-                            <option value="gemini-2.5-flash-preview-04-17" selected>Gemini 2.5 Flash Preview</option>
-                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                        </optgroup>
-                    </select>
+                <div id="chat-header">
+                    <button id="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div id="model-selector-area">
+                        <select id="model-selector">
+                            <optgroup label="Grok">
+                                <option value="grok-3-latest">Grok 3 Latest</option>
+                                <option value="grok-3-mini-beta">Grok 3 Mini Beta</option>
+                            </optgroup>
+                            <optgroup label="Gemini">
+                                <option value="gemini-2.5-flash-preview-04-17" selected>
+                                    Gemini 2.5 Flash Preview
+                                </option>
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div id="user-profile-area">
+                        <i id="profile-icon" class="fas fa-user-circle"></i>
+                        <span id="user-nickname">닉네임</span>
+                        <div id="profile-dropdown" class="dropdown-content">
+                            <a href="#" id="settings-button"><i class="fas fa-cog"></i> 설정</a>
+                            <a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a>
+                        </div>
+                    </div>
                 </div>
                 <div id="chatbox">
                     <!-- 채팅 메시지가 여기에 표시됩니다 -->
