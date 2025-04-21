@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from app.src.llm.llm_models import LlmModels
+from app.src.llm import LlmModels
 from app.src.models.message import Message
 
 

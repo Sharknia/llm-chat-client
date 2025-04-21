@@ -1,5 +1,11 @@
+from dotenv import load_dotenv
+
+# 애플리케이션 시작 시 .env 파일 로드
+load_dotenv()
+
+
 from app.src.clients.chat_client import ChatClient
-from app.src.llm.llm_models import GeminiModels
+from app.src.llm import GeminiModels
 from app.src.models.message_list import MessageList
 
 message_list = MessageList()
