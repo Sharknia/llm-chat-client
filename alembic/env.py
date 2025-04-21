@@ -5,10 +5,12 @@ from logging.config import fileConfig
 # ---- 추가 시작 ----
 from sqlalchemy import engine_from_config, pool
 
+# config 모듈 임포트
+# from app.src.core.config import settings # 기존 방식 주석 처리
+import app.src.core.config  # 상대 경로 방식으로 임포트 시도
 from alembic import context
 
-# config 모듈 임포트
-from app.src.core.config import settings
+settings = app.src.core.config.settings  # settings 객체 접근
 
 # 프로젝트 루트를 sys.path에 추가
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,7 +18,10 @@ sys.path.insert(0, project_dir)
 
 
 # 모델 및 Base 임포트 경로 수정
-from app.src.core.database import Base  # Base 임포트
+# from app.src.core.database import Base  # 기존 방식 주석 처리
+import app.src.core.database  # 상대 경로 방식으로 임포트 시도
+
+Base = app.src.core.database.Base  # Base 객체 접근
 
 # ---- 추가 끝 ----
 
@@ -35,6 +40,11 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 
 # ---- 수정 시작 ----
+# 모델을 이 시점에서 임포트하여 metadata에 등록되도록 함
+# from app.src.domain.user.models import User # 기존 방식 주석 처리
+import app.src.domain.user.models  # 상대 경로 방식으로 임포트 시도
+
+User = app.src.domain.user.models.User  # User 클래스 접근
 target_metadata = Base.metadata  # 우리 프로젝트의 Base.metadata 사용
 # ---- 수정 끝 ----
 

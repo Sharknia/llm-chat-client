@@ -20,6 +20,7 @@ class User(Base):
         Integer, nullable=False, server_default=text(str(AuthLevel.USER.value))
     )
     is_active = Column(Boolean, nullable=False, server_default=text("false"))
+    refresh_token = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

@@ -29,25 +29,37 @@ async def create_user(
     return new_user
 
 
-async def get_user_by_nickname(db: AsyncSession, nickname: str) -> User | None:
+async def get_user_by_nickname(
+    db: AsyncSession,
+    nickname: str,
+) -> User | None:
     """닉네임으로 사용자를 조회합니다."""
     result = await db.execute(select(User).filter(User.nickname == nickname))
     return result.scalar_one_or_none()
 
 
-async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
+async def get_user_by_email(
+    db: AsyncSession,
+    email: str,
+) -> User | None:
     """이메일로 사용자를 조회합니다."""
     result = await db.execute(select(User).filter(User.email == email))
     return result.scalar_one_or_none()
 
 
-async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
+async def get_user_by_id(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> User | None:
     """UUID로 사용자를 조회합니다."""
     result = await db.execute(select(User).filter(User.id == user_id))
     return result.scalar_one_or_none()
 
 
-async def activate_user(db: AsyncSession, user_id: uuid.UUID) -> User | None:
+async def activate_user(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> User | None:
     """사용자를 활성화합니다 (is_active = True)."""
     user = await get_user_by_id(db, user_id)
     if user and not user.is_active:
@@ -64,7 +76,9 @@ async def activate_user(db: AsyncSession, user_id: uuid.UUID) -> User | None:
 
 
 async def update_user_auth_level(
-    db: AsyncSession, user_id: uuid.UUID, new_level: AuthLevel
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    new_level: AuthLevel,
 ) -> User | None:
     """사용자의 권한 레벨을 변경합니다."""
     stmt = (
@@ -82,7 +96,9 @@ async def update_user_auth_level(
 
 
 async def update_user_password(
-    db: AsyncSession, user_id: uuid.UUID, new_hashed_password: str
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    new_hashed_password: str,
 ) -> User | None:
     """사용자의 비밀번호를 업데이트합니다."""
     stmt = (
@@ -100,7 +116,9 @@ async def update_user_password(
 
 
 async def get_inactive_users(
-    db: AsyncSession, skip: int = 0, limit: int = 100
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 100,
 ) -> list[User]:
     """비활성 사용자 목록을 조회합니다."""
     result = await db.execute(
@@ -110,14 +128,19 @@ async def get_inactive_users(
 
 
 async def get_all_users(
-    db: AsyncSession, skip: int = 0, limit: int = 100
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 100,
 ) -> list[User]:
     """모든 사용자 목록을 조회합니다."""
     result = await db.execute(select(User).offset(skip).limit(limit))
     return list(result.scalars().all())
 
 
-async def get_user_auth_level(db: AsyncSession, user_id: uuid.UUID) -> AuthLevel | None:
+async def get_user_auth_level(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> AuthLevel | None:
     """사용자의 권한 레벨을 조회합니다."""
     result = await db.execute(select(User.auth_level).filter(User.id == user_id))
     auth_level_value = result.scalar_one_or_none()
