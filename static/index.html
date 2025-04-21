@@ -10,13 +10,30 @@
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap" rel="stylesheet" />
     </head>
     <body>
-        <div id="chatbox">
-            <!-- 채팅 메시지가 여기에 표시됩니다 -->
-            <div class="message assistant-message">안녕하세요! 무엇을 도와드릴까요?</div>
-        </div>
-        <div id="input-area">
-            <input type="text" id="message" placeholder="메시지를 입력하세요..." />
-            <button onclick="sendMessage()">전송</button>
+        <div id="app-layout">
+            <!-- 전체 레이아웃 래퍼 -->
+            <div id="sidebar">
+                <!-- 사이드바 영역 -->
+                <h2>채팅 목록</h2>
+                <ul>
+                    <li><a href="#">채팅 1: 프로젝트 아이디어</a></li>
+                    <li class="active"><a href="#">채팅 2: 저녁 메뉴 추천</a></li>
+                    <li><a href="#">채팅 3: 코드 리뷰 요청</a></li>
+                    <li><a href="#">채팅 4: 주말 계획</a></li>
+                    <!-- 채팅 목록은 동적으로 추가됩니다 -->
+                </ul>
+            </div>
+            <div id="chat-area">
+                <!-- 기존 채팅 영역 래퍼 -->
+                <div id="chatbox">
+                    <!-- 채팅 메시지가 여기에 표시됩니다 -->
+                    <div class="message assistant-message">안녕하세요! 무엇을 도와드릴까요?</div>
+                </div>
+                <div id="input-area">
+                    <input type="text" id="message" placeholder="메시지를 입력하세요..." />
+                    <button onclick="sendMessage()">전송</button>
+                </div>
+            </div>
         </div>
 
         <script src="/static/script.js" defer></script>

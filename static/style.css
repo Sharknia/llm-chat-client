@@ -2,10 +2,73 @@ body {
     font-family: 'Noto Sans KR', sans-serif; /* Noto Sans KR 적용 */
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
     height: 100vh;
     background-color: #f4f7f6; /* 부드러운 배경색 */
+}
+
+#app-layout {
+    display: flex;
+    height: 100vh;
+}
+
+#sidebar {
+    width: 250px; /* 사이드바 너비 */
+    background-color: #e9e9eb; /* 사이드바 배경색 */
+    padding: 15px;
+    border-right: 1px solid #d1d1d1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box; /* 패딩 포함 크기 계산 */
+}
+
+#sidebar h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+#sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto; /* 목록 길어지면 스크롤 */
+    flex-grow: 1;
+}
+
+#sidebar li {
+    margin-bottom: 8px;
+}
+
+#sidebar li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+#sidebar li a:hover {
+    background-color: #dcdcdc;
+}
+
+#sidebar li.active a {
+    background-color: #007bff;
+    color: white;
+    font-weight: 500;
+}
+
+#chat-area {
+    flex-grow: 1; /* 남은 공간 차지 */
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* chat-area가 전체 높이 차지 */
+    background-color: #ffffff; /* 채팅 영역 배경 명시 */
 }
 
 #chatbox {
