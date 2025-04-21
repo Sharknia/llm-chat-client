@@ -33,16 +33,47 @@
     ```
 
 4.  **환경 변수 설정:**
-    프로젝트 루트에 `.env` 파일을 생성하고 필요한 API 키를 입력합니다.
+    프로젝트 루트에 `.env` 파일을 생성하고 다음 환경 변수들을 설정합니다.
+    (실제 운영 환경에서는 안전한 비밀번호를 사용하고 API 키를 입력하세요.)
+
     ```dotenv
-    # .env
-    GROK_API_KEY=sk-...
-    GEMINI_API_KEY=...
+    # .env 예시
+
+    # PostgreSQL 설정 (docker-compose.yml 참조)
+    POSTGRES_USER=user
+    POSTGRES_PASSWORD=password
+    POSTGRES_DB=llm_chat_db
+
+    # FastAPI에서 사용할 DB URL
+    DATABASE_URL=postgresql://user:password@db:5432/llm_chat_db
+
+    # LLM API 키
+    GROK_API_KEY=your_grok_api_key_here
+    GOOGLE_API_KEY=your_google_api_key_here
     ```
 
 ## 사용법
 
-### 예제 스크립트 실행
+### Docker Compose를 사용한 개발 환경 실행 (권장)
+
+Docker와 Docker Compose가 설치되어 있어야 합니다.
+
+1.  **`.env` 파일 생성 및 설정:** 위의 "환경 변수 설정" 섹션을 참조하여 `.env` 파일을 생성하고 필요한 값을 입력합니다.
+2.  **서비스 실행:** 다음 명령어를 실행하면 PostgreSQL 데이터베이스와 FastAPI 웹 서버가 함께 빌드되고 실행됩니다.
+
+    ```bash
+    make dev
+    ```
+
+    또는 직접 Docker Compose 명령어를 사용할 수 있습니다:
+
+    ```bash
+    docker compose up --build
+    ```
+
+    애플리케이션은 호스트의 `8001` 포트에서 접근 가능합니다 (`http://localhost:8001`).
+
+### 예제 스크립트 실행 (Docker 없이)
 
 제공된 예제 스크립트(`exmaple.py`)를 실행하여 Gemini 모델과의 간단한 상호작용을 테스트할 수 있습니다.
 
@@ -56,7 +87,7 @@ poetry run python exmaple.py
 make example
 ```
 
-### FastAPI 서버 실행 (개발용)
+### FastAPI 서버 직접 실행 (개발용, Docker 없이)
 
 간단한 FastAPI 서버를 실행할 수 있습니다 (현재는 기본 기능만 제공).
 
@@ -74,11 +105,12 @@ make run
 
 ```
 .
-├── .env                # 환경 변수 (API 키 등) - 직접 생성 필요
+├── .env                # 환경 변수 (직접 생성 및 설정 필요)
 ├── .gitignore          # Git 추적 제외 파일 목록
-├── .python-version     # Python 버전 명시 (pyenv 등에서 사용)
+├── .python-version     # Python 버전 명시
 ├── Dockerfile          # Docker 이미지 빌드 설정
-├── Makefile            # 자주 사용하는 명령어 (run, example)
+├── docker-compose.yml  # Docker Compose 설정 (DB, Web 서비스)
+├── Makefile            # 자주 사용하는 명령어 (dev, run, example)
 ├── README.md           # 프로젝트 설명 (현재 파일)
 ├── app                 # 애플리케이션 소스 코드
 │   ├── __init__.py
@@ -105,5 +137,5 @@ make run
 -   FastAPI 엔드포인트 확장 (채팅 API 등)
 -   다양한 LLM 모델 추가 지원
 -   오류 처리 및 로깅 개선
--   Docker 설정 완료 및 사용 가이드 추가
+-   웹 프론트엔드 구현
 -   테스트 코드 작성
