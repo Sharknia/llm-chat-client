@@ -9,5 +9,16 @@ chat_client = ChatClient(
     messages=message_list.get_messages(),
 )
 
-result = chat_client.get_completion()
-print(result)
+message_list.addUser(
+    content="""
+안녕하세요^^
+"""
+)
+
+try:
+    result = chat_client.get_completion()
+    for chunk in result:
+        print(chunk, end="", flush=True)
+    print()
+except Exception as e:
+    print(f"\n오류 발생: {e}")
