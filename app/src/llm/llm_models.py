@@ -11,7 +11,6 @@ from openai import OpenAI
 
 from app.src.models.message import Message, RoleEnum
 
-# .env 파일의 환경 변수를 로드합니다.
 load_dotenv()
 
 
@@ -19,6 +18,7 @@ class LLMModelListEnum(enum.Enum):
     GROK3_MINI_BETA = "grok-3-mini-beta"
     GROK3_LATEST = "grok-3-latest"
     GEMINI_2_0_FLASH = "gemini-2.0-flash"
+    GEMINI_2_5_FLASH_PREVIEW = "gemini-2.5-flash-preview-04-17"
 
 
 class LlmModels(ABC):
@@ -98,7 +98,7 @@ class GrokModels(LlmModels):
 
 class GeminiModels(LlmModels):
     api_key = os.getenv("GOOGLE_API_KEY", "null")
-    default_model = LLMModelListEnum.GEMINI_2_0_FLASH.value
+    default_model = LLMModelListEnum.GEMINI_2_5_FLASH_PREVIEW.value
 
     def __init__(self):
         # api key가 없는 경우 오류 발생
