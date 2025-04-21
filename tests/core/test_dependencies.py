@@ -14,8 +14,10 @@ async def test_get_db_yields_session_and_closes():
     """
     mock_session = AsyncMock(spec=AsyncSession)
 
-    # AsyncSessionLocal 팩토리 모킹 경로 수정 (dependencies 모듈 내의 경로로)
-    with patch("app.src.core.dependencies.AsyncSessionLocal") as mock_session_factory:
+    # AsyncSessionLocal 팩토리 모킹 경로 수정 (db_session 모듈 내의 경로로)
+    with patch(
+        "app.src.core.dependencies.db_session.AsyncSessionLocal"
+    ) as mock_session_factory:
         # 팩토리 호출 시 반환될 비동기 컨텍스트 매니저 모의 객체 설정
         # 이 객체는 __aenter__와 __aexit__를 가져야 함
         mock_context_manager = AsyncMock()
