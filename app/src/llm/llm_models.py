@@ -38,7 +38,6 @@ class LlmModels(ABC):
         temperature: float,
         max_tokens: int,
         top_p: float,
-        **kwargs: Any,  # 추가적인 모델별 파라미터
     ) -> Generator[str, None, None]:
         """메시지 리스트와 파라미터를 받아 API 호출 후 결과를 스트리밍으로 반환합니다."""
         pass
