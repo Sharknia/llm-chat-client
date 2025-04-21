@@ -95,16 +95,10 @@ def run_migrations_online() -> None:
     """
     # ---- 수정 시작 ----
     # settings 객체에서 DATABASE_URL 가져오기 (Alembic은 동기 URL 사용)
-    # db_url = os.getenv("DATABASE_URL") # 기존 방식 제거
     db_url = settings.DATABASE_URL
-    # if not db_url: # pydantic-settings가 처리하므로 불필요
-    #     raise ValueError(
-    #         "DATABASE_URL environment variable not set for Alembic online mode"
-    #     )
 
     # SQLAlchemy 엔진 설정 구성
     connectable = engine_from_config(
-        # config.get_section(config.config_ini_section, {}) # 기존 방식 대신 직접 URL 설정
         {"sqlalchemy.url": db_url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
