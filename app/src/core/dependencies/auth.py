@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import Annotated
 
 from fastapi import Depends, Header
 from jose import ExpiredSignatureError, JWTError, jwt
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.src.core.config import settings
 from app.src.core.dependencies.db_session import get_db
 from app.src.core.exceptions.auth_excptions import AuthErrors
+from app.src.domain.user.enums import AuthLevel
 from app.src.domain.user.repositories import (
     check_user_active,
     delete_refresh_token,
@@ -17,10 +19,14 @@ from app.src.domain.user.schemas import AuthenticatedUser
 
 ALGORITHM = "HS256"
 
+# Annotated를 사용하여 DB 세션 의존성 타입 정의
+DBSession = Annotated[Session, Depends(get_db)]
+
 
 async def create_access_token(
     user_id: int,
     email: str,
+    auth_level: AuthLevel,
     expires_delta: timedelta = timedelta(minutes=15),
 ) -> str:
     """
@@ -29,6 +35,7 @@ async def create_access_token(
     payload = {
         "user_id": user_id,
         "email": email,
+        "auth_level": auth_level.value,
         "exp": datetime.now(UTC) + expires_delta,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
@@ -73,19 +80,26 @@ async def registered_user(
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id: int = payload.get("user_id")
         email: str = payload.get("email")
+        auth_level_value: int = payload.get("auth_level")
 
-        if user_id is None or email is None:
+        if user_id is None or email is None or auth_level_value is None:
             raise AuthErrors.INVALID_TOKEN_PAYLOAD
-        # 인증된 사용자 정보 반환
-        return AuthenticatedUser(user_id=user_id, email=email)
 
-    except JWTError:
-        raise AuthErrors.INVALID_TOKEN
+        try:
+            auth_level = AuthLevel(auth_level_value)
+        except ValueError as e:
+            raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
+
+        # 인증된 사용자 정보 반환
+        return AuthenticatedUser(user_id=user_id, email=email, auth_level=auth_level)
+
+    except JWTError as e:
+        raise AuthErrors.INVALID_TOKEN from e
 
 
 # 헤더에 담겨온 리프레쉬 토큰 검증
 async def authenticate_refresh_token(
-    db: Session = Depends(get_db),
+    db: DBSession,
     authorization: str = Header(None),
 ) -> AuthenticatedUser:
     """
@@ -113,8 +127,8 @@ async def authenticate_refresh_token(
             if not await verify_refresh_token(db, user_id, token):
                 raise AuthErrors.INVALID_TOKEN
         # 유저가 발견되지 않은 경우
-        except ValueError:
-            raise AuthErrors.INVALID_TOKEN
+        except ValueError as e:
+            raise AuthErrors.INVALID_TOKEN from e
 
         # 사용된 리프레시 토큰 삭제
         await delete_refresh_token(db, user_id)
@@ -122,18 +136,18 @@ async def authenticate_refresh_token(
         # 인증된 사용자 정보 반환
         return AuthenticatedUser(user_id=user_id, email=email)
 
-    except ExpiredSignatureError:
-        raise AuthErrors.REFRESH_TOKEN_EXPIRED
-    except JWTError:
-        raise AuthErrors.INVALID_TOKEN
+    except ExpiredSignatureError as e:
+        raise AuthErrors.REFRESH_TOKEN_EXPIRED from e
+    except JWTError as e:
+        raise AuthErrors.INVALID_TOKEN from e
 
 
 async def authenticate_user(
+    db: DBSession,
     authorization: str = Header(None),
-    db: Session = Depends(get_db),
 ) -> AuthenticatedUser:
     """
-    사용자 인증 의존성 함수 : 이메일 인증 확인
+    사용자 인증 의존성 함수 : 계정 활성 상태 확인
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise AuthErrors.NOT_AUTHENTICATED
@@ -146,21 +160,27 @@ async def authenticate_user(
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id: int = payload.get("user_id")
         email: str = payload.get("email")
+        auth_level_value: int = payload.get("auth_level")
 
-        if user_id is None or email is None:
-            raise AuthErrors.INVALID_TOKEN
+        if user_id is None or email is None or auth_level_value is None:
+            raise AuthErrors.INVALID_TOKEN_PAYLOAD
 
-        # 사용자 조회 및 이메일 인증 여부 확인
+        try:
+            auth_level = AuthLevel(auth_level_value)
+        except ValueError as e:
+            raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
+
+        # 사용자 활성 상태 확인
         is_active_user = await check_user_active(db, user_id)
         if not is_active_user:
             raise AuthErrors.USER_NOT_ACTIVE
 
-        # 인증된 사용자 정보 반환
-        return AuthenticatedUser(user_id=user_id, email=email)
-    except ExpiredSignatureError:
-        raise AuthErrors.ACCESS_TOKEN_EXPIRED
-    except JWTError:
-        raise AuthErrors.INVALID_TOKEN
+        # 인증된 사용자 정보 반환 (auth_level 포함)
+        return AuthenticatedUser(user_id=user_id, email=email, auth_level=auth_level)
+    except ExpiredSignatureError as e:
+        raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
+    except JWTError as e:
+        raise AuthErrors.INVALID_TOKEN from e
 
 
 async def create_email_verification_token(
@@ -208,7 +228,7 @@ async def verify_password_reset_token(
             raise AuthErrors.INVALID_TOKEN
 
         return user_id
-    except ExpiredSignatureError:
-        raise AuthErrors.ACCESS_TOKEN_EXPIRED
-    except JWTError:
-        raise AuthErrors.INVALID_TOKEN
+    except ExpiredSignatureError as e:
+        raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
+    except JWTError as e:
+        raise AuthErrors.INVALID_TOKEN from e

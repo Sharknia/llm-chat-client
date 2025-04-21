@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
+from app.src.domain.user.enums import AuthLevel
+
 
 # Properties to receive via API on creation
 class UserCreate(BaseModel):
@@ -28,3 +30,4 @@ class User(UserBase):
 class AuthenticatedUser(BaseModel):
     user_id: int
     email: EmailStr
+    auth_level: AuthLevel
