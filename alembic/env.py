@@ -3,17 +3,17 @@ import sys
 from logging.config import fileConfig
 
 # ---- 추가 시작 ----
-from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+
+# config 모듈 임포트
+from app.src.core.config import settings
 
 # 프로젝트 루트를 sys.path에 추가
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_dir)
 
-# .env 파일 로드
-load_dotenv()
 
 # 모델 및 Base 임포트 경로 수정
 from app.src.core.database import Base  # Base 임포트
@@ -57,12 +57,13 @@ def run_migrations_offline() -> None:
 
     """
     # ---- 수정 시작 ----
-    # .env 에서 DATABASE_URL 가져오기 (Alembic은 동기 URL 사용)
-    url = os.getenv("DATABASE_URL")
-    if not url:
-        raise ValueError(
-            "DATABASE_URL environment variable not set for Alembic offline mode"
-        )
+    # settings 객체에서 DATABASE_URL 가져오기 (Alembic은 동기 URL 사용)
+    # url = os.getenv("DATABASE_URL") # 기존 방식 제거
+    url = settings.DATABASE_URL
+    # if not url: # pydantic-settings가 처리하므로 불필요
+    #     raise ValueError(
+    #         "DATABASE_URL environment variable not set for Alembic offline mode"
+    #     )
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -83,12 +84,13 @@ def run_migrations_online() -> None:
 
     """
     # ---- 수정 시작 ----
-    # .env 에서 DATABASE_URL 가져오기 (Alembic은 동기 URL 사용)
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        raise ValueError(
-            "DATABASE_URL environment variable not set for Alembic online mode"
-        )
+    # settings 객체에서 DATABASE_URL 가져오기 (Alembic은 동기 URL 사용)
+    # db_url = os.getenv("DATABASE_URL") # 기존 방식 제거
+    db_url = settings.DATABASE_URL
+    # if not db_url: # pydantic-settings가 처리하므로 불필요
+    #     raise ValueError(
+    #         "DATABASE_URL environment variable not set for Alembic online mode"
+    #     )
 
     # SQLAlchemy 엔진 설정 구성
     connectable = engine_from_config(

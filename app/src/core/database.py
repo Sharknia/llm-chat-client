@@ -1,16 +1,17 @@
-import os
-
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# config 모듈에서 settings 임포트
+from .config import settings
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable not set")
+ASYNC_DATABASE_URL = settings.DATABASE_URL.replace(
+    "postgresql://", "postgresql+asyncpg://", 1
+)
 
-ASYNC_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-
-async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=True)
+async_engine = create_async_engine(
+    ASYNC_DATABASE_URL,
+    echo=settings.DEBUG,  # DEBUG 설정에 따라 SQL 로깅 제어
+)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
