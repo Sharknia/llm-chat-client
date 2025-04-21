@@ -34,6 +34,9 @@ class ChatClient:
                     break
                 if chunk.choices[0].delta.content is not None:
                     yield chunk.choices[0].delta.content
+
+            # TODO: 스트림 처리 끝난 후 처리될 로직 작성
+
         except Exception as e:
             print(f"An exception occurred during stream generation: {e}")
             raise
