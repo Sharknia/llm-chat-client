@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>회원가입 - LLM Chat</title>
-        <link rel="stylesheet" href="/static/signup.css" />
+        <link rel="stylesheet" href="/static/style.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -12,9 +12,9 @@
             rel="stylesheet"
         />
     </head>
-    <body>
-        <div class="signup-container">
-            <div class="signup-box">
+    <body class="signup-page">
+        <div class="auth-container">
+            <div class="auth-box">
                 <h1>LLM Chat</h1>
                 <p>회원가입하여 서비스를 이용하세요.</p>
                 <form id="signup-form">
@@ -34,9 +34,9 @@
                         <label for="nickname">닉네임</label>
                         <input type="text" id="nickname" name="nickname" required />
                     </div>
-                    <button type="submit" class="signup-button">회원가입</button>
+                    <button type="submit" class="auth-button">회원가입</button>
                 </form>
-                <div class="login-link">이미 계정이 있으신가요? <a href="/login">로그인</a></div>
+                <div class="auth-link">이미 계정이 있으신가요? <a href="/login">로그인</a></div>
             </div>
         </div>
         <script>

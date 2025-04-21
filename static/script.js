@@ -81,7 +81,8 @@ document.getElementById('logout-button').addEventListener('click', (event) => {
     event.preventDefault(); // 기본 링크 동작 방지
     console.log('Logout clicked!');
     profileDropdown.classList.remove('show'); // 메뉴 닫기
-    // TODO: 로그아웃 관련 로직 구현
+    // TODO: 실제 로그아웃 API 호출 등 추가 로직 필요
+    window.location.href = '/login'; // 로그인 페이지로 리다이렉트 추가
 });
 
 // 드롭다운 외부 클릭 시 메뉴 닫기
