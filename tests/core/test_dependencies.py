@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # 테스트 대상 함수 및 객체 임포트 경로 수정
-from app.src.core.dependencies import get_db
+from app.src.core.dependencies.db_session import get_db
 
 
 @pytest.mark.asyncio

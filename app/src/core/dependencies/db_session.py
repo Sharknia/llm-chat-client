@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # database 모듈에서 AsyncSessionLocal 임포트
-from .database import AsyncSessionLocal
+from ..database import AsyncSessionLocal
 
 
 # FastAPI 의존성 주입용 비동기 함수
