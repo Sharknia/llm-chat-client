@@ -1,4 +1,3 @@
-import enum
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Generator
@@ -14,13 +13,6 @@ from app.src.models.message import Message, RoleEnum
 load_dotenv()
 
 
-class LLMModelListEnum(enum.Enum):
-    GROK3_MINI_BETA = "grok-3-mini-beta"
-    GROK3_LATEST = "grok-3-latest"
-    GEMINI_2_0_FLASH = "gemini-2.0-flash"
-    GEMINI_2_5_FLASH_PREVIEW = "gemini-2.5-flash-preview-04-17"
-
-
 class LlmModels(ABC):
     @abstractmethod
     def get_api_key(self) -> str:
@@ -28,6 +20,11 @@ class LlmModels(ABC):
 
     @abstractmethod
     def get_default_model_name(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_supported_models(self) -> list[str]:
+        """이 LLM 제공자가 지원하는 모델 이름 목록을 반환합니다."""
         pass
 
     @abstractmethod
@@ -46,7 +43,6 @@ class LlmModels(ABC):
 class GrokModels(LlmModels):
     api_key = os.getenv("GROK_API_KEY", "null")
     base_url = "https://api.x.ai/v1"
-    default_model = LLMModelListEnum.GROK3_LATEST.value
 
     def __init__(self):
         # api key가 없는 경우 오류 발생
@@ -61,7 +57,13 @@ class GrokModels(LlmModels):
         return self.api_key
 
     def get_default_model_name(self) -> str:
-        return self.default_model
+        return "grok-3-latest"
+
+    def get_supported_models(self) -> list[str]:
+        return [
+            "grok-3-latest",
+            "grok-3-mini-beta",
+        ]
 
     def generate_completion_stream(
         self,
@@ -97,7 +99,6 @@ class GrokModels(LlmModels):
 
 class GeminiModels(LlmModels):
     api_key = os.getenv("GOOGLE_API_KEY", "null")
-    default_model = LLMModelListEnum.GEMINI_2_5_FLASH_PREVIEW.value
 
     def __init__(self):
         # api key가 없는 경우 오류 발생
@@ -109,7 +110,13 @@ class GeminiModels(LlmModels):
         return self.api_key
 
     def get_default_model_name(self) -> str:
-        return self.default_model
+        return "gemini-2.5-flash-preview-04-17"
+
+    def get_supported_models(self) -> list[str]:
+        return [
+            "gemini-2.5-flash-preview-04-17",
+            "gemini-2.0-flash",
+        ]
 
     def _format_gemini_contents(self, messages: list[Message]) -> list[dict[str, Any]]:
         """Gemini API의 'contents' 형식으로 변환합니다. system prompt는 제외합니다."""
