@@ -49,6 +49,9 @@ class GrokModels(LlmModels):
     default_model = LLMModelListEnum.GROK3_LATEST.value
 
     def __init__(self):
+        # api key가 없는 경우 오류 발생
+        if self.get_api_key() == "null":
+            raise ValueError("GROK_API_KEY is not set")
         self.client = OpenAI(
             api_key=self.get_api_key(),
             base_url=self.base_url,
@@ -95,10 +98,13 @@ class GrokModels(LlmModels):
 
 
 class GeminiModels(LlmModels):
-    api_key = os.getenv("GEMINI_API_KEY", "null")
+    api_key = os.getenv("GOOGLE_API_KEY", "null")
     default_model = LLMModelListEnum.GEMINI_2_0_FLASH.value
 
     def __init__(self):
+        # api key가 없는 경우 오류 발생
+        if self.get_api_key() == "null":
+            raise ValueError("GOOGLE_API_KEY is not set")
         self.client = genai.Client(api_key=self.get_api_key())
 
     def get_api_key(self) -> str:
@@ -145,21 +151,11 @@ class GeminiModels(LlmModels):
         # Gemini용 'contents' 포맷팅 (system 메시지 제외)
         gemini_contents = self._format_gemini_contents(user_assistant_messages)
 
-        generation_config = {
-            "temperature": temperature,
-            "max_output_tokens": max_tokens,
-            "top_p": top_p,
-            **kwargs.get("generation_config", {}),
-        }
-        safety_settings = kwargs.get("safety_settings")
-
         try:
+            # client.models.generate_content_stream 호출 (system_instruction 제거)
             stream = self.client.models.generate_content_stream(
                 model=model_name,
                 contents=gemini_contents,
-                system_instruction=system_instruction,
-                generation_config=generation_config,
-                safety_settings=safety_settings,
             )
 
             for chunk in stream:
