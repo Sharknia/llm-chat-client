@@ -6,9 +6,9 @@ from typing import Any
 
 from dotenv import load_dotenv
 from google import genai
-from openai import OpenAI  # OpenAI 라이브러리 임포트
+from openai import OpenAI
 
-from app.src.models.message import Message, RoleEnum  # Message와 RoleEnum 임포트
+from app.src.models.message import Message, RoleEnum
 
 # .env 파일의 환경 변수를 로드합니다.
 load_dotenv()
@@ -96,11 +96,9 @@ class GrokModels(LlmModels):
 
 class GeminiModels(LlmModels):
     api_key = os.getenv("GEMINI_API_KEY", "null")
-    # Default model updated based on user example
     default_model = LLMModelListEnum.GEMINI_2_0_FLASH.value
 
     def __init__(self):
-        # Client initialization remains the same
         self.client = genai.Client(api_key=self.get_api_key())
 
     def get_api_key(self) -> str:
@@ -114,7 +112,7 @@ class GeminiModels(LlmModels):
         contents = []
         for msg in messages:
             if msg.role == RoleEnum.system:
-                continue  # System message is handled separately
+                continue  # 시스템 메시지는 별도로 처리
             # 역할 매핑: assistant -> model, user -> user
             role = "model" if msg.role == RoleEnum.assistant else msg.role.value
             contents.append({"role": role, "parts": [{"text": msg.content}]})
@@ -134,10 +132,10 @@ class GeminiModels(LlmModels):
         user_assistant_messages = []
         for msg in messages:
             if msg.role == RoleEnum.system:
-                if system_instruction is None:  # Use the first system message
+                if system_instruction is None:  # 첫 번째 시스템 메시지 사용
                     system_instruction = msg.content
                 else:
-                    # Handle multiple system messages if necessary, e.g., concatenate or raise error
+                    # 여러 시스템 메시지 처리 (필요시 연결 또는 오류 발생)
                     print(
                         "Warning: Multiple system messages found. Using the first one."
                     )
@@ -156,11 +154,10 @@ class GeminiModels(LlmModels):
         safety_settings = kwargs.get("safety_settings")
 
         try:
-            # Use the model name directly as per the example
             stream = self.client.models.generate_content_stream(
-                model=model_name,  # Removed 'models/' prefix
+                model=model_name,
                 contents=gemini_contents,
-                system_instruction=system_instruction,  # Pass system instruction
+                system_instruction=system_instruction,
                 generation_config=generation_config,
                 safety_settings=safety_settings,
             )
@@ -170,8 +167,8 @@ class GeminiModels(LlmModels):
                     if chunk.text:
                         yield chunk.text
                 except ValueError:
-                    # Handles potential errors if chunk.text doesn't exist (e.g., safety ratings)
-                    pass  # Ignore chunks without text (like safety feedback)
+                    # chunk.text가 없는 경우 오류 처리 (예: 안전 등급)
+                    pass  # 텍스트 없는 청크 무시 (예: 안전 피드백)
 
         except Exception as e:
             print(f"Gemini API 호출 중 예외 발생: {e}")
