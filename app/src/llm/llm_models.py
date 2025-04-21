@@ -6,6 +6,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 from openai import OpenAI
 
 from app.src.models.message import Message, RoleEnum
@@ -124,6 +125,19 @@ class GeminiModels(LlmModels):
             contents.append({"role": role, "parts": [{"text": msg.content}]})
         return contents
 
+    def _extract_system_instruction(self, messages: list[Message]) -> str | None:
+        """메시지 목록에서 모든 시스템 명령어 내용을 추출하여 합칩니다."""
+        system_instructions = []
+        for msg in messages:
+            if msg.role == RoleEnum.system:
+                system_instructions.append(msg.content)
+
+        if not system_instructions:
+            return None
+
+        # 시스템 메시지 내용을 줄 바꿈 두 개로 합침
+        return "\n\n".join(system_instructions)
+
     def generate_completion_stream(
         self,
         messages: list[Message],
@@ -133,31 +147,23 @@ class GeminiModels(LlmModels):
         top_p: float,
         **kwargs: Any,
     ) -> Generator[str, None, None]:
-        # Extract system instruction
-        system_instruction = None
-        user_assistant_messages = []
-        for msg in messages:
-            if msg.role == RoleEnum.system:
-                if system_instruction is None:  # 첫 번째 시스템 메시지 사용
-                    system_instruction = msg.content
-                else:
-                    # 여러 시스템 메시지 처리 (필요시 연결 또는 오류 발생)
-                    print(
-                        "Warning: Multiple system messages found. Using the first one."
-                    )
-            else:
-                user_assistant_messages.append(msg)
+        # 시스템 명령어 추출 및 사용자/어시스턴트 메시지 분리
+        system_instruction = self._extract_system_instruction(messages)
+        user_assistant_messages = [
+            msg for msg in messages if msg.role != RoleEnum.system
+        ]
 
-        # Gemini용 'contents' 포맷팅 (system 메시지 제외)
+        # Gemini용 'contents' 포맷팅 (시스템 메시지 제외된 리스트 사용)
         gemini_contents = self._format_gemini_contents(user_assistant_messages)
 
         try:
-            # client.models.generate_content_stream 호출 (system_instruction 제거)
+            # config 생성 시 추출된 system_instruction 사용
+            config = types.GenerateContentConfig(system_instruction=system_instruction)
             stream = self.client.models.generate_content_stream(
                 model=model_name,
                 contents=gemini_contents,
+                config=config,
             )
-
             for chunk in stream:
                 try:
                     if chunk.text:
