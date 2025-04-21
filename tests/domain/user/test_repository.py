@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.sql.selectable import Select
 
 # 테스트 대상 모듈 및 객체 임포트
-from app.src.domain.user import repository
+from app.src.domain.user import repositories
 from app.src.domain.user.enums import AuthLevel
 from app.src.domain.user.models import User
 
@@ -40,7 +40,7 @@ def mock_user(test_user_data) -> User:
 async def test_create_user(mock_db_session: AsyncMock, test_user_data):
     """create_user 함수 테스트"""
     # 함수 호출
-    created_user = await repository.create_user(
+    created_user = await repositories.create_user(
         db=mock_db_session,
         nickname=test_user_data["nickname"],
         email=test_user_data["email"],
@@ -74,7 +74,7 @@ async def test_get_user_by_nickname(mock_db_session: AsyncMock, mock_user: User)
     mock_db_session.execute.return_value = mock_result
 
     # 함수 호출
-    found_user = await repository.get_user_by_nickname(
+    found_user = await repositories.get_user_by_nickname(
         mock_db_session, mock_user.nickname
     )
 
@@ -93,7 +93,7 @@ async def test_get_user_by_nickname_not_found(mock_db_session: AsyncMock):
     mock_result.scalar_one_or_none.return_value = None
     mock_db_session.execute.return_value = mock_result
 
-    found_user = await repository.get_user_by_nickname(mock_db_session, "nonexistent")
+    found_user = await repositories.get_user_by_nickname(mock_db_session, "nonexistent")
 
     mock_db_session.execute.assert_awaited_once()
     assert found_user is None
@@ -106,7 +106,7 @@ async def test_get_user_by_email(mock_db_session: AsyncMock, mock_user: User):
     mock_result.scalar_one_or_none.return_value = mock_user
     mock_db_session.execute.return_value = mock_result
 
-    found_user = await repository.get_user_by_email(mock_db_session, mock_user.email)
+    found_user = await repositories.get_user_by_email(mock_db_session, mock_user.email)
 
     mock_db_session.execute.assert_awaited_once()
     assert found_user == mock_user
@@ -143,7 +143,7 @@ async def test_activate_user_success(mock_db_session: AsyncMock, mock_user: User
     # execute가 호출 순서에 따라 다른 결과 반환하도록 설정
     mock_db_session.execute.side_effect = [mock_result_get, mock_result_update]
 
-    activated_user = await repository.activate_user(mock_db_session, mock_user.id)
+    activated_user = await repositories.activate_user(mock_db_session, mock_user.id)
 
     assert mock_db_session.execute.call_count == 2  # get_user + update
     mock_db_session.commit.assert_awaited_once()
@@ -162,7 +162,7 @@ async def test_activate_user_already_active(
     mock_result_get.scalar_one_or_none.return_value = mock_user
     mock_db_session.execute.return_value = mock_result_get  # get만 실행됨
 
-    activated_user = await repository.activate_user(mock_db_session, mock_user.id)
+    activated_user = await repositories.activate_user(mock_db_session, mock_user.id)
 
     mock_db_session.execute.assert_awaited_once()  # get_user만 호출
     mock_db_session.commit.assert_not_awaited()  # commit 호출 안 됨
@@ -185,7 +185,7 @@ async def test_get_inactive_users(mock_db_session: AsyncMock, mock_user: User):
     mock_result.scalars.return_value = mock_scalars_result
     mock_db_session.execute.return_value = mock_result
 
-    users = await repository.get_inactive_users(mock_db_session, skip=0, limit=10)
+    users = await repositories.get_inactive_users(mock_db_session, skip=0, limit=10)
 
     mock_db_session.execute.assert_awaited_once()
     # 상세 필터 조건 검증 (~User.is_active)은 더 복잡한 mock 설정 필요
