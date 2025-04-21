@@ -234,12 +234,9 @@ button:hover {
 }
 
 #model-selector-area {
-    /* padding: 10px 20px; 제거 -> header 패딩 사용 */
-    /* border-bottom: 1px solid #e9ecef; 제거 */
-    /* background-color: #f8f9fa; 제거 */
-    /* text-align: center; 제거 */
-    margin-left: auto; /* 가운데 정렬 효과 */
-    margin-right: auto;
+    /* margin-left: auto; 제거 */
+    /* margin-right: auto; 제거 */
+    /* 모델 선택 영역이 토글 버튼 바로 오른쪽에 오도록 자동 마진 제거 */
 }
 
 #model-selector {
