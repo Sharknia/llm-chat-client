@@ -43,4 +43,17 @@ async def read_login():
         )
 
 
+@app.get("/signup")
+async def read_signup():
+    file_path = os.path.join(static_dir, "signup.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    else:
+        from fastapi.responses import HTMLResponse
+
+        return HTMLResponse(
+            content="<h1>Error: signup.html not found</h1>", status_code=404
+        )
+
+
 # WebSocket 엔드포인트 등 추가 로직은 여기에...
