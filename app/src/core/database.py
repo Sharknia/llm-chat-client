@@ -21,5 +21,3 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 Base = declarative_base()
-
-# get_db 함수는 dependencies.py로 이동
