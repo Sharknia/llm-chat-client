@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
-from app.src.db.database import Base
+from app.src.core.database import Base
 
 from .enums import AuthLevel
 

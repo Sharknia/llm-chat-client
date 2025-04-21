@@ -15,8 +15,8 @@ sys.path.insert(0, project_dir)
 # .env 파일 로드
 load_dotenv()
 
-# 모델 및 Base 임포트
-from app.src.db.database import Base  # Base 임포트
+# 모델 및 Base 임포트 경로 수정
+from app.src.core.database import Base  # Base 임포트
 
 # ---- 추가 끝 ----
 
