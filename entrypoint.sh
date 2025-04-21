@@ -1,10 +1,25 @@
 #!/bin/sh
 
-# 데이터베이스 마이그레이션 실행
-# 컨테이너 내부에서 실행되므로 .env 파일의 DATABASE_URL을 사용함 (alembic/env.py가 로드)
-echo "Running database migrations..."
-alembic upgrade head
+# Exit immediately if a command exits with a non-zero status.
+set -e
 
-# 원래 CMD 실행 ($@는 Dockerfile의 CMD 인자들을 나타냄)
+# Function to check if database is ready
+wait_for_db() {
+    echo "Waiting for database..."
+    while ! nc -z db 5432; do
+        sleep 1
+    done
+    echo "Database is ready."
+}
+
+# Wait for the database to be ready
+wait_for_db
+
+# Run database migrations
+echo "Running database migrations..."
+# PYTHONPATH=. alembic upgrade head # 기존 방식 주석 처리 (혹시 남아있다면)
+PYTHONPATH=/app alembic upgrade head # PYTHONPATH 명시적 설정 추가
+
+# Start the application
 echo "Starting application..."
 exec "$@" 

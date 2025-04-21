@@ -2,7 +2,7 @@
 FROM python:3.12-slim
 
 # 시스템 업데이트 및 빌드에 필요한 패키지 설치 (curl, build-essential 등)
-RUN apt-get update && apt-get install -y curl build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl build-essential netcat-openbsd && rm -rf /var/lib/apt/lists/*
 
 # Poetry 설치 (환경 변수 POETRY_VERSION을 통해 버전을 지정합니다. 여기서는 최신 안정 버전을 사용합니다.)
 ENV POETRY_VERSION=2.1.1
