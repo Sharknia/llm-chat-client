@@ -94,3 +94,10 @@ class AuthErrors:
         description="Not Found",
         detail="User not found",
     )
+
+    # 권한 부족 오류
+    INSUFFICIENT_PERMISSIONS = BaseHTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        description="Forbidden",
+        detail="Insufficient permissions",
+    )

@@ -134,7 +134,9 @@ async def authenticate_refresh_token(
         await delete_refresh_token(db, user_id)
 
         # 인증된 사용자 정보 반환
-        return AuthenticatedUser(user_id=user_id, email=email)
+        return AuthenticatedUser(
+            user_id=user_id, email=email, auth_level=AuthLevel.USER
+        )
 
     except ExpiredSignatureError as e:
         raise AuthErrors.REFRESH_TOKEN_EXPIRED from e
@@ -147,7 +149,7 @@ async def authenticate_user(
     authorization: str = Header(None),
 ) -> AuthenticatedUser:
     """
-    사용자 인증 의존성 함수 : 계정 활성 상태 확인
+    사용자 인증 의존성 함수 : 활성 상태인 일반 사용자(USER 레벨 이상) 확인
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise AuthErrors.NOT_AUTHENTICATED
@@ -175,8 +177,91 @@ async def authenticate_user(
         if not is_active_user:
             raise AuthErrors.USER_NOT_ACTIVE
 
+        # --- 권한 레벨 확인 추가 (USER 이상) ---
+        if auth_level.value < AuthLevel.USER.value:
+            raise AuthErrors.INSUFFICIENT_PERMISSIONS
+
         # 인증된 사용자 정보 반환 (auth_level 포함)
         return AuthenticatedUser(user_id=user_id, email=email, auth_level=auth_level)
+    except ExpiredSignatureError as e:
+        raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
+    except JWTError as e:
+        raise AuthErrors.INVALID_TOKEN from e
+
+
+# ---- 관리자 인증 함수 추가 ----
+async def authenticate_admin_user(
+    db: DBSession,
+    authorization: str = Header(None),
+) -> AuthenticatedUser:
+    """
+    관리자 인증 의존성 함수 : 활성 상태인 관리자(ADMIN 레벨 이상) 확인
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise AuthErrors.NOT_AUTHENTICATED
+
+    token = authorization.split(" ")[1]
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: int = payload.get("user_id")
+        email: str = payload.get("email")
+        auth_level_value: int = payload.get("auth_level")
+
+        if user_id is None or email is None or auth_level_value is None:
+            raise AuthErrors.INVALID_TOKEN_PAYLOAD
+
+        try:
+            auth_level = AuthLevel(auth_level_value)
+        except ValueError as e:
+            raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
+
+        is_active_user = await check_user_active(db, user_id)
+        if not is_active_user:
+            raise AuthErrors.USER_NOT_ACTIVE
+
+        # --- 권한 레벨 확인 추가 (ADMIN 이상) ---
+        if auth_level.value < AuthLevel.ADMIN.value:
+            raise AuthErrors.INSUFFICIENT_PERMISSIONS
+
+        return AuthenticatedUser(user_id=user_id, email=email, auth_level=auth_level)
+    except ExpiredSignatureError as e:
+        raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
+    except JWTError as e:
+        raise AuthErrors.INVALID_TOKEN from e
+
+
+async def create_password_reset_token(
+    user_id: int,
+) -> str:
+    """
+    비밀번호 재설정을 위한 JWT 생성
+    """
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.now(UTC) + timedelta(minutes=5),
+        "purpose": "password_reset",
+    }
+    return jwt.encode(payload, settings.PASSWORD_SECRET_KEY, algorithm=ALGORITHM)
+
+
+async def verify_password_reset_token(
+    token: str,
+) -> int:
+    """
+    비밀번호 재설정 JWT 검증
+    """
+    try:
+        payload = jwt.decode(
+            token, settings.PASSWORD_SECRET_KEY, algorithms=[ALGORITHM]
+        )
+        user_id: int = payload.get("user_id")
+        purpose: str = payload.get("purpose")
+
+        if user_id is None or purpose != "password_reset":
+            raise AuthErrors.INVALID_TOKEN
+
+        return user_id
     except ExpiredSignatureError as e:
         raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
     except JWTError as e:
