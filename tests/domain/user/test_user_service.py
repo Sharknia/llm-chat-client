@@ -12,7 +12,7 @@ from app.src.domain.user.services import create_new_user
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "email, plain_password, nickname, expected_exception",
+    "email, password, nickname, expected_exception",
     [
         # 정상 케이스
         (
@@ -34,12 +34,11 @@ async def test_register_new_user(
     add_mock_user,
     mock_db_session: AsyncSession,
     email,
-    plain_password,
+    password,
     nickname,
     expected_exception: BaseHTTPException | None,
 ):
     """회원가입 서비스 테스트"""
-
     # 중복 검사를 위한 기존 유저 추가
     user: User = await add_mock_user(
         email="duplicate@example.com",
@@ -53,7 +52,7 @@ async def test_register_new_user(
             await create_new_user(
                 db=mock_db_session,
                 email=email,
-                plain_password=plain_password,
+                password=password,
                 nickname=nickname,
             )
         except BaseHTTPException as exc:
@@ -65,7 +64,7 @@ async def test_register_new_user(
         result: UserResponse = await create_new_user(
             db=mock_db_session,
             email=email,
-            plain_password=plain_password,
+            password=password,
             nickname=nickname,
         )
         assert isinstance(result, UserResponse)

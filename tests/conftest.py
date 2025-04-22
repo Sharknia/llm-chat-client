@@ -76,7 +76,7 @@ async def add_mock_user(mock_db_session: AsyncSession):
             nickname=nickname,
             is_active=is_active,
         )
-        await mock_db_session.add(user)
+        mock_db_session.add(user)
         await mock_db_session.commit()
         return user
 
