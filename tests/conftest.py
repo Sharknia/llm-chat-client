@@ -1,7 +1,8 @@
 from collections.abc import AsyncGenerator
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -35,7 +36,7 @@ SessionLocal = async_sessionmaker(
 )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def mock_db_session() -> AsyncGenerator[AsyncSession, None]:
     """비동기 AsyncSession 객체를 생성하는 픽스처"""
 
@@ -56,12 +57,12 @@ async def mock_db_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def add_mock_user(
     mock_db_session: AsyncSession,
 ):
     async def _add_mock_user(
-        id: UUID | None = None,
+        id: UUID = "00000000-0000-0000-0000-000000000000",
         email: str = "test@example.com",
         password: str = "password",
         is_active: bool = False,
@@ -69,7 +70,6 @@ async def add_mock_user(
         """
         테스트를 위한 mock user를 DB에 추가하는 함수
         """
-        id = id or uuid4()
         hashed_password = hash_password(password)
         user = User(
             id=id,
@@ -84,7 +84,7 @@ async def add_mock_user(
     return _add_mock_user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def mock_client(
     mock_db_session: AsyncSession,
 ):
@@ -229,7 +229,7 @@ def override_authenticate_user(mock_client: TestClient):
     return _override
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def add_mock_user(mock_db_session: AsyncSession):
     async def _add_mock_user(
         id: int = 1,
