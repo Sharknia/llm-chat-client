@@ -5,8 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.dependencies.db_session import get_db
 from app.src.core.exceptions.auth_excptions import AuthErrors
-from app.src.domain.user.schemas import UserCreateRequest, UserResponse
-from app.src.domain.user.services import create_new_user
+from app.src.domain.user.schemas import (
+    LoginResponse,
+    UserCreateRequest,
+    UserLoginRequest,
+    UserResponse,
+)
+from app.src.domain.user.services import create_new_user, login_user
 from app.src.utils.swsagger_helper import create_responses
 
 router = APIRouter(prefix="/v1/user", tags=["user"])
@@ -22,7 +27,7 @@ router = APIRouter(prefix="/v1/user", tags=["user"])
     ),
 )
 async def signup(
-    user_in: UserCreateRequest,
+    request: UserCreateRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> UserResponse:
     """
@@ -32,5 +37,29 @@ async def signup(
     - **password**: 사용자 비밀번호
     - **nickname**: 사용자 닉네임
     """
-    new_user: UserResponse = await create_new_user(db=db, user_in=user_in)
+    new_user: UserResponse = await create_new_user(db=db, user_in=request)
     return new_user
+
+
+@router.post(
+    "/login",
+    response_model=LoginResponse,
+    status_code=status.HTTP_200_OK,
+    summary="사용자 로그인",
+    responses=create_responses(
+        AuthErrors.USER_NOT_FOUND,
+        AuthErrors.INVALID_PASSWORD,
+    ),
+)
+async def login(
+    request: UserLoginRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> LoginResponse:
+    """
+    사용자 로그인
+
+    - **email**: 사용자 이메일 (로그인 시 사용)
+    - **password**: 사용자 비밀번호
+    """
+    user: LoginResponse = await login_user(db=db, user_in=request)
+    return user

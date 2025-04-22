@@ -12,6 +12,11 @@ class UserCreateRequest(BaseModel):
     nickname: str
 
 
+class UserLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
 # 사용자 정보 응답 스키마
 class UserResponse(BaseModel):
     id: UUID
@@ -22,6 +27,13 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# 로그인 응답 스키마
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    user_id: UUID
 
 
 # 인증된 사용자 정보 스키마
