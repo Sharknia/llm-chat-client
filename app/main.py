@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.src.domain.user.v1 import router as user_router
+
 app = FastAPI()
 
 # static 디렉토리 경로 설정 (app 디렉토리 기준)
@@ -51,3 +53,6 @@ async def read_signup():
         return HTMLResponse(
             content="<h1>Error: signup.html not found</h1>", status_code=404
         )
+
+
+app.include_router(user_router.router, prefix="/api")
