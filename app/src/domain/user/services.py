@@ -85,3 +85,33 @@ async def logout_user(db: AsyncSession, user_id: UUID) -> None:
     # 액세스 토큰을 블랙리스트에 등록하는 로직은 생략
     await delete_refresh_token(db, user_id)
     return None
+
+
+async def refresh_access_token(
+    db: AsyncSession,
+    user_id: UUID,
+    email: str,
+) -> LoginResponse:
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        raise AuthErrors.USER_NOT_FOUND
+
+    if not user.is_active:
+        raise AuthErrors.USER_NOT_ACTIVE
+
+    access_token = await create_access_token(
+        user_id=user_id,
+        email=email,
+        nickname=user.nickname,
+        auth_level=user.auth_level,
+    )
+    refresh_token = await create_refresh_token(
+        db=db,
+        user_id=user_id,
+        email=email,
+    )
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user_id=str(user_id),
+    )

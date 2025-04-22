@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,7 +10,11 @@ from app.src.domain.user.schemas import (
     LoginResponse,
     UserResponse,
 )
-from app.src.domain.user.services import create_new_user, login_user
+from app.src.domain.user.services import (
+    create_new_user,
+    login_user,
+    refresh_access_token,
+)
 
 
 @pytest.mark.asyncio
@@ -145,3 +151,69 @@ async def test_login_user(
         assert result.access_token is not None
         assert result.refresh_token is not None
         assert result.user_id == str(user.id)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id, email, expected_exception",
+    [
+        # 정상 케이스
+        (
+            "00000000-0000-0000-0000-00000000000a",
+            "test@example.com",
+            None,
+        ),
+        # 잘못된 사용자 ID
+        (
+            "00000000-0000-0000-0000-00000000000b",
+            "test@example.com",
+            AuthErrors.USER_NOT_FOUND,
+        ),
+        # 잘못된 이메일
+        (
+            "00000000-0000-0000-0000-00000000000b",
+            "invalidemail@example.com",
+            AuthErrors.USER_NOT_FOUND,
+        ),
+    ],
+)
+async def test_refresh_access_token(
+    add_mock_user,
+    mock_db_session: AsyncSession,
+    user_id,
+    email,
+    expected_exception: BaseHTTPException,
+):
+    """액세스 토큰 갱신 서비스 테스트"""
+
+    # 테스트를 위한 초기 데이터 추가
+    if email == "test@example.com":
+        user: User = await add_mock_user(
+            id=UUID("00000000-0000-0000-0000-00000000000a"),
+            is_active=True,
+            nickname="test_user",
+            password="validpassword",
+        )
+
+    if expected_exception:
+        try:
+            await refresh_access_token(
+                db=mock_db_session,
+                user_id=UUID(user_id),
+                email=email,
+            )
+        except BaseHTTPException as exc:
+            assert exc.status_code == expected_exception.status_code
+            assert exc.detail == expected_exception.detail
+        else:
+            pytest.fail("Expected exception was not raised.")
+    else:
+        result: LoginResponse = await refresh_access_token(
+            db=mock_db_session,
+            user_id=UUID(user_id),
+            email=email,
+        )
+        assert isinstance(result, LoginResponse)
+        assert result.access_token is not None
+        assert result.refresh_token is not None
+        assert result.user_id == user_id

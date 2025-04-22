@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.src.core.dependencies.auth import registered_user
+from app.src.core.dependencies.auth import authenticate_refresh_token, registered_user
 from app.src.core.dependencies.db_session import get_db
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.domain.user.schemas import (
@@ -14,7 +14,12 @@ from app.src.domain.user.schemas import (
     UserLoginRequest,
     UserResponse,
 )
-from app.src.domain.user.services import create_new_user, login_user, logout_user
+from app.src.domain.user.services import (
+    create_new_user,
+    login_user,
+    logout_user,
+    refresh_access_token,
+)
 from app.src.utils.swsagger_helper import create_responses
 
 router = APIRouter(prefix="/v1", tags=["user"])
@@ -98,3 +103,32 @@ async def logout(
     """
     await logout_user(db, login_user.user_id)
     return LogoutResponse()
+
+
+# 액세스 토큰 갱신
+@router.post(
+    "/token/refresh",
+    response_model=LoginResponse,
+    status_code=status.HTTP_200_OK,
+    summary="액세스 토큰 갱신",
+    responses=create_responses(
+        AuthErrors.INVALID_TOKEN,
+        AuthErrors.INVALID_TOKEN_PAYLOAD,
+        AuthErrors.USER_NOT_ACTIVE,
+        AuthErrors.USER_NOT_FOUND,
+        AuthErrors.REFRESH_TOKEN_EXPIRED,
+    ),
+)
+async def refresh_token(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    login_user: Annotated[AuthenticatedUser, Depends(authenticate_refresh_token)],
+) -> LoginResponse:
+    """
+    액세스 토큰 갱신
+    """
+    result = await refresh_access_token(
+        db=db,
+        user_id=login_user.user_id,
+        email=login_user.email,
+    )
+    return result

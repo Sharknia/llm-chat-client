@@ -119,7 +119,7 @@ async def registered_user(
 
 # 헤더에 담겨온 리프레쉬 토큰 검증
 async def authenticate_refresh_token(
-    db: DBSession,
+    db: Annotated[AsyncSession, Depends(get_db)],
     authorization: str = Header(None),
 ) -> AuthenticatedUser:
     """
