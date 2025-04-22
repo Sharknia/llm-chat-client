@@ -101,7 +101,7 @@ async def test_create_refresh_token():
         )
 
         # 페이로드 내용 검증
-        assert payload.get("user_id") == test_user_id
+        assert payload.get("user_id") == str(test_user_id)
         assert payload.get("email") == test_email
         assert "exp" in payload  # 만료 시간 필드 존재 여부 확인
         # 리프레시 토큰에는 auth_level이 포함되지 않음 (선택사항)

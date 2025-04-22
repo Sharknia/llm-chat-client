@@ -33,7 +33,7 @@ class UserResponse(BaseModel):
 class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
-    user_id: UUID
+    user_id: str
 
 
 # 인증된 사용자 정보 스키마

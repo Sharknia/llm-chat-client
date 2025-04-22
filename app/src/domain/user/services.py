@@ -57,9 +57,9 @@ async def login_user(
         raise AuthErrors.USER_NOT_ACTIVE
 
     return LoginResponse(
-        access_token=create_access_token(
+        access_token=await create_access_token(
             user.id, user.email, user.nickname, user.auth_level
         ),
-        refresh_token=create_refresh_token(db, user.id, user.email),
-        user_id=user.id,
+        refresh_token=await create_refresh_token(db, user.id, user.email),
+        user_id=str(user.id),
     )

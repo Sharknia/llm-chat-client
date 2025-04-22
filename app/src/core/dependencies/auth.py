@@ -38,7 +38,7 @@ async def create_access_token(
         "user_id": str(user_id),
         "email": email,
         "nickname": nickname,
-        "auth_level": auth_level.value,
+        "auth_level": auth_level,
         "exp": datetime.now(UTC) + expires_delta,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
@@ -53,15 +53,16 @@ async def create_refresh_token(
     """
     Refresh Token 생성 함수
     """
+    user_id_str = str(user_id)
+
     payload = {
-        "user_id": user_id,
+        "user_id": user_id_str,
         "email": email,
-        "exp": datetime.now(UTC) + expires_delta,  # 만료 시간 추가
+        "exp": datetime.now(UTC) + expires_delta,
     }
     refresh_token = jwt.encode(
         payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm=ALGORITHM
     )
-    # db에 리프레시 토큰 저장
     await save_refresh_token(db, user_id, refresh_token)
     return refresh_token
 
@@ -280,7 +281,7 @@ async def authenticate_admin_user(
 
 
 async def create_password_reset_token(
-    user_id: uuid.UUID,
+    user_id: int,
 ) -> str:
     """
     비밀번호 재설정을 위한 JWT 생성
