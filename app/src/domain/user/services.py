@@ -53,6 +53,9 @@ async def login_user(
     if not verify_password(user_in.password, user.hashed_password):
         raise AuthErrors.INVALID_PASSWORD
 
+    if not user.is_active:
+        raise AuthErrors.USER_NOT_ACTIVE
+
     return LoginResponse(
         access_token=create_access_token(
             user.id, user.email, user.nickname, user.auth_level
