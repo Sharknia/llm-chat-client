@@ -3,15 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.core.security import hash_password
 from app.src.domain.user.enums import AuthLevel
-from app.src.domain.user.models import User
 from app.src.domain.user.repositories import create_user, get_user_by_email
-from app.src.domain.user.schemas import UserCreateRequest
+from app.src.domain.user.schemas import UserCreateRequest, UserResponse
 
 
 async def create_new_user(
     db: AsyncSession,
     user_in: UserCreateRequest,
-) -> User:
+) -> UserResponse:
     """
     새로운 사용자를 생성
     - 이메일 중복 확인
@@ -32,4 +31,5 @@ async def create_new_user(
         auth_level=AuthLevel.USER,
         is_active=False,
     )
-    return new_user
+
+    return UserResponse.model_validate(new_user)

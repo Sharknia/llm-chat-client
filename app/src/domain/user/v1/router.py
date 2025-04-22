@@ -1,11 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.dependencies.db_session import get_db
 from app.src.core.exceptions.auth_excptions import AuthErrors
-from app.src.domain.user.models import User
 from app.src.domain.user.schemas import UserCreateRequest, UserResponse
 from app.src.domain.user.services import create_new_user
 from app.src.utils.swsagger_helper import create_responses
@@ -33,11 +32,5 @@ async def signup(
     - **password**: 사용자 비밀번호
     - **nickname**: 사용자 닉네임
     """
-    try:
-        new_user: User = await create_new_user(db=db, user_in=user_in)
-        return UserResponse.model_validate(new_user)
-    except AuthErrors.EMAIL_ALREADY_REGISTERED as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 등록된 이메일입니다.",
-        ) from e
+    new_user: UserResponse = await create_new_user(db=db, user_in=user_in)
+    return new_user
