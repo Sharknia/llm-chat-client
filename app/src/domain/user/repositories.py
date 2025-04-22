@@ -149,14 +149,22 @@ async def get_user_auth_level(
     return None
 
 
-async def save_refresh_token(db: AsyncSession, user_id: int, token: str) -> None:
+async def save_refresh_token(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    token: str,
+) -> None:
     """사용자의 리프레시 토큰을 저장합니다."""
     stmt = update(User).where(User.id == user_id).values(refresh_token=token)
     await db.execute(stmt)
     await db.commit()
 
 
-async def verify_refresh_token(db: AsyncSession, user_id: int, token: str) -> bool:
+async def verify_refresh_token(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    token: str,
+) -> bool:
     """제공된 리프레시 토큰이 저장된 토큰과 일치하는지 확인합니다."""
     result = await db.execute(select(User.refresh_token).where(User.id == user_id))
     stored_token = result.scalar_one_or_none()
@@ -165,14 +173,20 @@ async def verify_refresh_token(db: AsyncSession, user_id: int, token: str) -> bo
     return stored_token == token
 
 
-async def delete_refresh_token(db: AsyncSession, user_id: int) -> None:
+async def delete_refresh_token(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> None:
     """사용자의 리프레시 토큰을 삭제합니다 (None으로 설정)."""
     stmt = update(User).where(User.id == user_id).values(refresh_token=None)
     await db.execute(stmt)
     await db.commit()
 
 
-async def check_user_active(db: AsyncSession, user_id: int) -> bool:
+async def check_user_active(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> bool:
     """사용자의 활성 상태(is_active)를 확인합니다."""
     result = await db.execute(select(User.is_active).where(User.id == user_id))
     is_active = result.scalar_one_or_none()

@@ -1,33 +1,32 @@
+from uuid import UUID
+
 from pydantic import BaseModel, EmailStr
 
 from app.src.domain.user.enums import AuthLevel
 
 
-# Properties to receive via API on creation
-class UserCreate(BaseModel):
+# 회원가입 요청 스키마
+class UserCreateRequest(BaseModel):
     email: EmailStr
     password: str
-    username: str | None = None
+    nickname: str
 
 
-# Properties shared by models stored in DB
-class UserBase(BaseModel):
-    email: EmailStr | None = None
-    is_active: bool = True
-    is_verified: bool = False
-    username: str | None = None
-
-
-# Properties to return to client
-class User(UserBase):
-    id: int
+# 사용자 정보 응답 스키마
+class UserResponse(BaseModel):
+    id: UUID
+    email: EmailStr
+    nickname: str
+    is_active: bool
+    auth_level: AuthLevel
 
     class Config:
-        from_attributes = True  # SQLAlchemy 모델과 매핑하기 위해 필요 (이전의 orm_mode)
+        from_attributes = True
 
 
-# Schema for authenticated user data derived from token
+# 인증된 사용자 정보 스키마
 class AuthenticatedUser(BaseModel):
-    user_id: int
+    user_id: UUID
     email: EmailStr
+    nickname: str
     auth_level: AuthLevel
