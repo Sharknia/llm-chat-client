@@ -1,5 +1,6 @@
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, text
-from sqlalchemy.dialects.postgresql import UUID
+from uuid import uuid4
+
+from sqlalchemy import UUID, Boolean, Column, DateTime, Integer, String, text
 from sqlalchemy.sql import func
 
 from app.src.core.database import Base
@@ -10,9 +11,7 @@ from .enums import AuthLevel
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     nickname = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
