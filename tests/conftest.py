@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -61,7 +61,7 @@ async def add_mock_user(
     mock_db_session: AsyncSession,
 ):
     async def _add_mock_user(
-        id: UUID = "00000000-0000-0000-0000-000000000000",
+        id: UUID | None = None,
         email: str = "test@example.com",
         password: str = "password",
         is_active: bool = False,
@@ -69,6 +69,7 @@ async def add_mock_user(
         """
         테스트를 위한 mock user를 DB에 추가하는 함수
         """
+        id = id or uuid4()
         hashed_password = hash_password(password)
         user = User(
             id=id,
