@@ -66,5 +66,9 @@ async def login(
     - **email**: 사용자 이메일 (로그인 시 사용)
     - **password**: 사용자 비밀번호
     """
-    user: LoginResponse = await login_user(db=db, user_in=request)
+    user: LoginResponse = await login_user(
+        db=db,
+        email=request.email,
+        password=request.password,
+    )
     return user

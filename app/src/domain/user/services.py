@@ -7,7 +7,6 @@ from app.src.domain.user.enums import AuthLevel
 from app.src.domain.user.repositories import create_user, get_user_by_email
 from app.src.domain.user.schemas import (
     LoginResponse,
-    UserLoginRequest,
     UserResponse,
 )
 
@@ -44,13 +43,14 @@ async def create_new_user(
 
 async def login_user(
     db: AsyncSession,
-    user_in: UserLoginRequest,
+    email: str,
+    password: str,
 ) -> LoginResponse:
-    user = await get_user_by_email(db, email=user_in.email)
+    user = await get_user_by_email(db, email=email)
     if not user:
         raise AuthErrors.USER_NOT_FOUND
 
-    if not verify_password(user_in.password, user.hashed_password):
+    if not verify_password(password, user.hashed_password):
         raise AuthErrors.INVALID_PASSWORD
 
     if not user.is_active:
