@@ -46,7 +46,7 @@ async def create_access_token(
 
 async def create_refresh_token(
     db: AsyncSession,
-    user_id: int,
+    user_id: uuid.UUID,
     email: str,
     expires_delta: timedelta = timedelta(days=7),
 ) -> str:
@@ -280,7 +280,7 @@ async def authenticate_admin_user(
 
 
 async def create_password_reset_token(
-    user_id: int,
+    user_id: uuid.UUID,
 ) -> str:
     """
     비밀번호 재설정을 위한 JWT 생성
