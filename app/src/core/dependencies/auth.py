@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends, Header
 from jose import ExpiredSignatureError, JWTError, jwt
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.config import settings
 from app.src.core.dependencies.db_session import get_db
@@ -20,7 +20,7 @@ from app.src.domain.user.schemas import AuthenticatedUser
 ALGORITHM = "HS256"
 
 # Annotated를 사용하여 DB 세션 의존성 타입 정의
-DBSession = Annotated[Session, Depends(get_db)]
+DBSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def create_access_token(
@@ -42,7 +42,7 @@ async def create_access_token(
 
 
 async def create_refresh_token(
-    db: Session,
+    db: AsyncSession,
     user_id: int,
     email: str,
     expires_delta: timedelta = timedelta(days=7),
