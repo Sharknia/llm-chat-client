@@ -1,9 +1,8 @@
 from collections.abc import AsyncGenerator
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
-
-# SQLAlchemy 비동기 관련 임포트 추가
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.main import app
@@ -62,7 +61,7 @@ async def add_mock_user(
     mock_db_session: AsyncSession,
 ):
     async def _add_mock_user(
-        id: int = 1,
+        id: UUID = "00000000-0000-0000-0000-000000000000",
         email: str = "test@example.com",
         password: str = "password",
         is_active: bool = False,
