@@ -54,6 +54,7 @@ async def signup(
     responses=create_responses(
         AuthErrors.USER_NOT_FOUND,
         AuthErrors.INVALID_PASSWORD,
+        AuthErrors.USER_NOT_ACTIVE,
     ),
 )
 async def login(

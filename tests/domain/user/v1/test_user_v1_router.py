@@ -72,8 +72,6 @@ async def test_post_user(
     assert response.status_code == expected_status
 
     if expected_response:
-        print(response.json())
-        print(expected_response)
         assert response.json() == expected_response
     else:
         response_data = response.json()
@@ -81,3 +79,109 @@ async def test_post_user(
         assert response_data["nickname"] == mock_user_data["nickname"]
         assert response_data["is_active"] == mock_user_data["is_active"]
         assert response_data["auth_level"] == mock_user_data["auth_level"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "request_data, expected_status, mock_side_effect, expected_response",
+    [
+        # 정상 요청
+        (
+            {
+                "email": "test@example.com",
+                "password": "password123",
+            },
+            200,
+            None,
+            None,
+        ),
+        # 사용자 없음
+        (
+            {
+                "email": "nonexistent@example.com",
+                "password": "password123",
+            },
+            AuthErrors.USER_NOT_FOUND.status_code,
+            AuthErrors.USER_NOT_FOUND,
+            {
+                "description": AuthErrors.USER_NOT_FOUND.description,
+                "detail": AuthErrors.USER_NOT_FOUND.detail,
+            },
+        ),
+        # 비밀번호 불일치
+        (
+            {
+                "email": "test@example.com",
+                "password": "wrong_password",
+            },
+            AuthErrors.INVALID_PASSWORD.status_code,
+            AuthErrors.INVALID_PASSWORD,
+            {
+                "description": AuthErrors.INVALID_PASSWORD.description,
+                "detail": AuthErrors.INVALID_PASSWORD.detail,
+            },
+        ),
+        # 비활성 사용자
+        (
+            {
+                "email": "inactive@example.com",
+                "password": "password123",
+            },
+            AuthErrors.USER_NOT_ACTIVE.status_code,
+            AuthErrors.USER_NOT_ACTIVE,
+            {
+                "description": AuthErrors.USER_NOT_ACTIVE.description,
+                "detail": AuthErrors.USER_NOT_ACTIVE.detail,
+            },
+        ),
+    ],
+)
+async def test_post_user_login(
+    mocker,
+    add_mock_user,
+    mock_client,
+    mock_user_data,
+    request_data,
+    expected_status,
+    mock_side_effect,
+    expected_response,
+):
+    """로그인 API 테스트"""
+    # 정상 유저 추가
+    user: User = await add_mock_user(
+        email="test@example.com",
+        password="password123",
+        nickname="test_user",
+        is_active=True,
+    )
+    # 비활성 유저 추가
+    await add_mock_user(
+        email="inactive@example.com",
+        password="password123",
+        nickname="inactive_user",
+        is_active=False,
+    )
+    if mock_side_effect:
+        mocker.patch(
+            "app.src.domain.user.services.login_user",
+            side_effect=mock_side_effect,
+        )
+    else:
+        mocker.patch(
+            "app.src.domain.user.services.login_user", return_value=mock_user_data
+        )
+
+    # API 호출
+    response: Response = mock_client.post("/api/user/v1/login", json=request_data)
+
+    # 응답 검증
+    assert response.status_code == expected_status
+
+    if expected_response:
+        assert response.json() == expected_response
+    else:
+        response_data = response.json()
+        # response_data안에 access_token, refresh_token, user_id가 있는지 확인
+        assert "access_token" in response_data
+        assert "refresh_token" in response_data
+        assert "user_id" in response_data
