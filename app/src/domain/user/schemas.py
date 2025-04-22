@@ -42,3 +42,7 @@ class AuthenticatedUser(BaseModel):
     email: EmailStr
     nickname: str
     auth_level: AuthLevel
+
+
+class LogoutResponse(BaseModel):
+    message: str = "Logout successful"

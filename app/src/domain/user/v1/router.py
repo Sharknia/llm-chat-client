@@ -3,15 +3,18 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.src.core.dependencies.auth import registered_user
 from app.src.core.dependencies.db_session import get_db
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.domain.user.schemas import (
+    AuthenticatedUser,
     LoginResponse,
+    LogoutResponse,
     UserCreateRequest,
     UserLoginRequest,
     UserResponse,
 )
-from app.src.domain.user.services import create_new_user, login_user
+from app.src.domain.user.services import create_new_user, login_user, logout_user
 from app.src.utils.swsagger_helper import create_responses
 
 router = APIRouter(prefix="/v1", tags=["user"])
@@ -73,3 +76,25 @@ async def login(
         password=request.password,
     )
     return user
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    summary="사용자 로그아웃",
+    responses=create_responses(
+        AuthErrors.INVALID_TOKEN,
+        AuthErrors.INVALID_TOKEN_PAYLOAD,
+        AuthErrors.USER_NOT_ACTIVE,
+        AuthErrors.USER_NOT_FOUND,
+    ),
+)
+async def logout(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    login_user: Annotated[AuthenticatedUser, Depends(registered_user)],
+) -> LogoutResponse:
+    """
+    사용자 로그아웃
+    """
+    await logout_user(db, login_user.user_id)
+    return LogoutResponse()

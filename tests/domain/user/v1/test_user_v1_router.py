@@ -3,6 +3,7 @@ from fastapi import Response
 
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.domain.user.models import User
+from app.src.domain.user.schemas import LogoutResponse
 
 
 @pytest.mark.asyncio
@@ -185,3 +186,32 @@ async def test_post_user_login(
         assert "access_token" in response_data
         assert "refresh_token" in response_data
         assert "user_id" in response_data
+
+
+@pytest.mark.asyncio
+async def test_post_user_logout(
+    mocker,
+    mock_authenticated_user,
+    override_registered_user,
+    mock_client,
+):
+    """로그아웃 API 테스트"""
+    # 로그인 성공으로 오버라이드
+    override_registered_user(mock_authenticated_user)
+
+    mocker.patch(
+        "app.src.domain.user.v1.router.logout_user",
+        return_value=LogoutResponse(),
+    )
+
+    # API 호출
+    headers = (
+        {"Authorization": "Bearer some_refresh_token"}
+        if mock_authenticated_user
+        else {}
+    )
+    response: Response = mock_client.post("/api/user/v1/logout", headers=headers)
+
+    # 응답 검증
+    assert response.status_code == 200
+    assert response.json() == {"message": "Logout successful"}

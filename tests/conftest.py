@@ -125,6 +125,7 @@ def mock_authenticated_user():
     return AuthenticatedUser(
         user_id="00000000-0000-0000-0000-000000000000",
         email="user@exmaple.com",
+        nickname="test_user",
         auth_level=AuthLevel.USER,
     )
 

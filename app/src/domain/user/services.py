@@ -1,10 +1,17 @@
+from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.dependencies.auth import create_access_token, create_refresh_token
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.core.security import hash_password, verify_password
 from app.src.domain.user.enums import AuthLevel
-from app.src.domain.user.repositories import create_user, get_user_by_email
+from app.src.domain.user.repositories import (
+    create_user,
+    delete_refresh_token,
+    get_user_by_email,
+    get_user_by_id,
+)
 from app.src.domain.user.schemas import (
     LoginResponse,
     UserResponse,
@@ -63,3 +70,18 @@ async def login_user(
         refresh_token=await create_refresh_token(db, user.id, user.email),
         user_id=str(user.id),
     )
+
+
+async def logout_user(db: AsyncSession, user_id: UUID) -> None:
+    # 실제 있는 유저인지 확인
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        raise AuthErrors.USER_NOT_FOUND
+
+    # 활성화 상태 확인
+    if not user.is_active:
+        raise AuthErrors.USER_NOT_ACTIVE
+
+    # 액세스 토큰을 블랙리스트에 등록하는 로직은 생략
+    await delete_refresh_token(db, user_id)
+    return None
