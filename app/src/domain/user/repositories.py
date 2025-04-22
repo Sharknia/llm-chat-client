@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,7 +49,7 @@ async def get_user_by_email(
 
 async def get_user_by_id(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
 ) -> User | None:
     """UUID로 사용자를 조회합니다."""
     result = await db.execute(select(User).filter(User.id == user_id))
@@ -58,7 +58,7 @@ async def get_user_by_id(
 
 async def activate_user(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
 ) -> User | None:
     """사용자를 활성화합니다 (is_active = True)."""
     user = await get_user_by_id(db, user_id)
@@ -77,7 +77,7 @@ async def activate_user(
 
 async def update_user_auth_level(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     new_level: AuthLevel,
 ) -> User | None:
     """사용자의 권한 레벨을 변경합니다."""
@@ -97,7 +97,7 @@ async def update_user_auth_level(
 
 async def update_user_password(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     new_hashed_password: str,
 ) -> User | None:
     """사용자의 비밀번호를 업데이트합니다."""
@@ -139,7 +139,7 @@ async def get_all_users(
 
 async def get_user_auth_level(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
 ) -> AuthLevel | None:
     """사용자의 권한 레벨을 조회합니다."""
     result = await db.execute(select(User.auth_level).filter(User.id == user_id))
@@ -151,7 +151,7 @@ async def get_user_auth_level(
 
 async def save_refresh_token(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     token: str,
 ) -> None:
     """사용자의 리프레시 토큰을 저장합니다."""
@@ -162,7 +162,7 @@ async def save_refresh_token(
 
 async def verify_refresh_token(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     token: str,
 ) -> bool:
     """제공된 리프레시 토큰이 저장된 토큰과 일치하는지 확인합니다."""
@@ -175,7 +175,7 @@ async def verify_refresh_token(
 
 async def delete_refresh_token(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
 ) -> None:
     """사용자의 리프레시 토큰을 삭제합니다 (None으로 설정)."""
     stmt = update(User).where(User.id == user_id).values(refresh_token=None)
@@ -185,7 +185,7 @@ async def delete_refresh_token(
 
 async def check_user_active(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
 ) -> bool:
     """사용자의 활성 상태(is_active)를 확인합니다."""
     result = await db.execute(select(User.is_active).where(User.id == user_id))

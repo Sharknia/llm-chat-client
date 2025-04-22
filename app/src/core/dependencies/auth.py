@@ -1,6 +1,6 @@
-import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, Header
 from jose import ExpiredSignatureError, JWTError, jwt
@@ -25,7 +25,7 @@ DBSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def create_access_token(
-    user_id: uuid.UUID,
+    user_id: UUID,
     email: str,
     nickname: str,
     auth_level: AuthLevel,
@@ -46,7 +46,7 @@ async def create_access_token(
 
 async def create_refresh_token(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     email: str,
     expires_delta: timedelta = timedelta(days=7),
 ) -> str:
@@ -98,7 +98,7 @@ async def registered_user(
         # user_id 형식 검증 추가
         try:
             # UUID 변환 시도 (실제 사용은 안하지만 형식 검증용)
-            _ = uuid.UUID(user_id_str)
+            uuid_user_id = UUID(user_id_str)
         except ValueError as e:
             # UUID 변환 실패 시 잘못된 페이로드
             raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
@@ -200,7 +200,7 @@ async def authenticate_user(
 
         # 사용자 활성 상태 확인 (UUID로 변환하여 전달)
         try:
-            user_uuid = uuid.UUID(user_id_str)  # 문자열을 UUID로 변환
+            user_uuid = UUID(user_id_str)  # 문자열을 UUID로 변환
         except ValueError as e:
             # UUID 변환 실패 시 잘못된 토큰으로 간주
             raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
@@ -258,7 +258,7 @@ async def authenticate_admin_user(
 
         # 사용자 활성 상태 확인 (UUID로 변환하여 전달)
         try:
-            user_uuid = uuid.UUID(user_id_str)  # 문자열을 UUID로 변환
+            user_uuid = UUID(user_id_str)  # 문자열을 UUID로 변환
         except ValueError as e:
             raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
 
