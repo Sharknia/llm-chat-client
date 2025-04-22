@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
@@ -58,23 +58,22 @@ async def mock_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture
-async def add_mock_user(
-    mock_db_session: AsyncSession,
-):
+async def add_mock_user(mock_db_session: AsyncSession):
     async def _add_mock_user(
-        id: UUID = "00000000-0000-0000-0000-000000000000",
+        id: UUID | None = None,
         email: str = "test@example.com",
         password: str = "password",
+        nickname: str = "test_user",
         is_active: bool = False,
     ) -> User:
-        """
-        테스트를 위한 mock user를 DB에 추가하는 함수
-        """
+        """테스트를 위한 mock user를 DB에 추가하는 함수"""
+        id = id or uuid4()
         hashed_password = hash_password(password)
         user = User(
             id=id,
             email=email,
-            password=hashed_password,
+            hashed_password=hashed_password,
+            nickname=nickname,
             is_active=is_active,
         )
         await mock_db_session.add(user)
@@ -227,28 +226,3 @@ def override_authenticate_user(mock_client: TestClient):
 
     # 테스트에서 사용할 오버라이드 함수 반환
     return _override
-
-
-@pytest_asyncio.fixture
-async def add_mock_user(mock_db_session: AsyncSession):
-    async def _add_mock_user(
-        id: int = 1,
-        email: str = "test@example.com",
-        password: str = "password",
-        is_active: bool = False,
-    ) -> User:
-        """
-        테스트를 위한 mock user를 DB에 추가하는 함수
-        """
-        hashed_password = hash_password(password)
-        user = User(
-            id=id,
-            email=email,
-            password=hashed_password,
-            is_active=is_active,
-        )
-        await mock_db_session.add(user)
-        await mock_db_session.commit()
-        return user
-
-    return _add_mock_user
