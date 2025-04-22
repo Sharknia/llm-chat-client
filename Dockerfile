@@ -2,7 +2,7 @@
 FROM python:3.12-slim
 
 # 시스템 업데이트 및 빌드에 필요한 패키지 설치 (curl, build-essential 등)
-RUN apt-get update && apt-get install -y curl build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl build-essential netcat-openbsd && rm -rf /var/lib/apt/lists/*
 
 # Poetry 설치 (환경 변수 POETRY_VERSION을 통해 버전을 지정합니다. 여기서는 최신 안정 버전을 사용합니다.)
 ENV POETRY_VERSION=2.1.1
@@ -23,8 +23,21 @@ RUN poetry config virtualenvs.create false && poetry install --no-root
 # 나머지 소스 코드 복사
 COPY . /app
 
-# FastAPI 기본 포트(8000) 노출
+# Entrypoint 스크립트 복사 및 실행 권한 부여
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# 기본 작업 디렉토리 설정 (이미 설정되어 있다면 중복 제거 가능)
+WORKDIR /app
+
+# Entrypoint 설정
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# 기본 실행 명령어 (Entrypoint가 실행할 명령어)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# FastAPI 기본 포트(8000) 노출 (기존 위치 또는 여기에 두어도 무방)
 EXPOSE 8000
 
 # 컨테이너 실행 시 Uvicorn을 사용하여 FastAPI 앱을 시작합니다.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] # 이 라인은 ENTRYPOINT/CMD 방식으로 대체됨
