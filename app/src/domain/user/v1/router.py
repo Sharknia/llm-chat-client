@@ -14,11 +14,11 @@ from app.src.domain.user.schemas import (
 from app.src.domain.user.services import create_new_user, login_user
 from app.src.utils.swsagger_helper import create_responses
 
-router = APIRouter(prefix="/v1/user", tags=["user"])
+router = APIRouter(prefix="/v1", tags=["user"])
 
 
 @router.post(
-    "/signup",
+    "/",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="새로운 사용자 생성 (회원가입)",

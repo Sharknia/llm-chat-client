@@ -115,6 +115,7 @@ def mock_user_data():
         "is_active": False,
         "created_at": "2024-12-31T12:00:00Z",
         "updated_at": "2024-12-31T12:00:00Z",
+        "auth_level": AuthLevel.USER,
     }
 
 

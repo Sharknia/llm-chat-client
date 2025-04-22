@@ -31,7 +31,7 @@ from app.src.domain.user.services import create_new_user, login_user
         ),
     ],
 )
-async def test_register_new_user(
+async def test_create_new_user(
     add_mock_user,
     mock_db_session: AsyncSession,
     email,
