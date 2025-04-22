@@ -37,7 +37,12 @@ async def signup(
     - **password**: 사용자 비밀번호
     - **nickname**: 사용자 닉네임
     """
-    new_user: UserResponse = await create_new_user(db=db, user_in=request)
+    new_user: UserResponse = await create_new_user(
+        db=db,
+        email=request.email,
+        nickname=request.nickname,
+        password=request.password,
+    )
     return new_user
 
 

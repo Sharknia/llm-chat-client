@@ -7,7 +7,6 @@ from app.src.domain.user.enums import AuthLevel
 from app.src.domain.user.repositories import create_user, get_user_by_email
 from app.src.domain.user.schemas import (
     LoginResponse,
-    UserCreateRequest,
     UserLoginRequest,
     UserResponse,
 )
@@ -15,7 +14,9 @@ from app.src.domain.user.schemas import (
 
 async def create_new_user(
     db: AsyncSession,
-    user_in: UserCreateRequest,
+    email: str,
+    nickname: str,
+    password: str,
 ) -> UserResponse:
     """
     새로운 사용자를 생성
@@ -23,16 +24,16 @@ async def create_new_user(
     - 비밀번호 해싱
     - 사용자 생성 (is_active=False, auth_level=USER)
     """
-    existing_user = await get_user_by_email(db, email=user_in.email)
+    existing_user = await get_user_by_email(db, email=email)
     if existing_user:
         raise AuthErrors.EMAIL_ALREADY_REGISTERED
 
-    hashed_pwd = hash_password(user_in.password)
+    hashed_pwd = hash_password(password)
 
     new_user = await create_user(
         db=db,
-        nickname=user_in.nickname,
-        email=user_in.email,
+        nickname=nickname,
+        email=email,
         hashed_password=hashed_pwd,
         auth_level=AuthLevel.USER,
         is_active=False,
