@@ -27,8 +27,8 @@ async function handleLogin(event) {
 
         // 토큰 저장
         saveTokens(data.access_token, data.refresh_token, data.user_id);
-        // 채팅 페이지로 이동
-        window.location.href = '/chat';
+        // 홈 페이지로 이동
+        window.location.href = '/home';
     } catch (error) {
         alert(error.message);
         console.error('로그인 에러:', error);
