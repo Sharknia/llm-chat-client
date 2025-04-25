@@ -132,3 +132,19 @@ async def refresh_token(
         email=login_user.email,
     )
     return result
+
+
+# 내 정보 가져오기
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="내 정보 가져오기",
+)
+async def get_me(
+    login_user: Annotated[AuthenticatedUser, Depends(registered_user)],
+) -> UserResponse:
+    """
+    내 정보 가져오기
+    """
+    return login_user
