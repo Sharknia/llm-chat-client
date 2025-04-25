@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.src.core.config import settings
 from app.src.core.dependencies.auth import create_access_token, create_refresh_token
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.core.security import hash_password, verify_password
@@ -35,6 +36,9 @@ async def create_new_user(
         raise AuthErrors.EMAIL_ALREADY_REGISTERED
 
     hashed_pwd = hash_password(password)
+    is_active = False
+    if settings.ENVIRONMENT != "prod":
+        is_active = True
 
     new_user = await create_user(
         db=db,
@@ -42,7 +46,7 @@ async def create_new_user(
         email=email,
         hashed_password=hashed_pwd,
         auth_level=AuthLevel.USER,
-        is_active=False,
+        is_active=is_active,
     )
 
     return UserResponse.model_validate(new_user)
