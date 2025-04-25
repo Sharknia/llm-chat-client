@@ -74,7 +74,7 @@ async function refreshTokenAndRetry(originalUrl, originalOptions) {
     try {
         // 중요: 토큰 갱신 요청은 fetchWithAuth를 사용하지 않음 (무한 루프 방지)
         // 또한, 이 요청의 Authorization 헤더에는 리프레시 토큰을 사용해야 함.
-        const refreshResponse = await fetch('/api/user/v1/token/refresh', {
+        const refreshResponse = await fetch(`${API_URL}/user/v1/token/refresh`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${refreshToken}`,

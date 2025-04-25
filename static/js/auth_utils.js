@@ -6,7 +6,7 @@ import { clearTokens, fetchWithAuth } from './auth.js';
  */
 export async function checkLoginStatus() {
     try {
-        const response = await fetchWithAuth('/api/user/v1/me');
+        const response = await fetchWithAuth('/user/v1/me');
         if (!response.ok) {
             return false;
         }
@@ -23,7 +23,7 @@ export async function checkLoginStatus() {
  */
 export async function getUserInfo() {
     try {
-        const response = await fetchWithAuth('/api/user/v1/me');
+        const response = await fetchWithAuth('/user/v1/me');
         if (!response.ok) {
             return null;
         }
@@ -40,7 +40,7 @@ export async function getUserInfo() {
  */
 export async function logout() {
     try {
-        const response = await fetchWithAuth('/api/user/v1/logout', {
+        const response = await fetchWithAuth('/user/v1/logout', {
             method: 'POST',
         });
         if (response.ok) {
