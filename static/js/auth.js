@@ -1,3 +1,5 @@
+import { API_URL } from './config.js';
+
 // 토큰 관리를 위한 키 상수
 const TOKEN_KEYS = {
     ACCESS_TOKEN: 'access_token',
@@ -138,6 +140,7 @@ export async function fetchWithAuth(url, options = {}) {
     };
 
     try {
+        url = API_URL + url;
         const response = await fetch(url, mergedOptions);
 
         // 401 Unauthorized 에러 발생 시 토큰 갱신 및 재시도 로직
