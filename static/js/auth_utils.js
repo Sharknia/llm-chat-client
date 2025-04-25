@@ -6,7 +6,7 @@ import { fetchWithAuth } from './auth.js';
  */
 export async function checkLoginStatus() {
     try {
-        const response = await fetchWithAuth('/api/user/me');
+        const response = await fetchWithAuth('/api/user/v1/me');
         if (!response.ok) {
             return false;
         }
@@ -23,7 +23,7 @@ export async function checkLoginStatus() {
  */
 export async function getUserInfo() {
     try {
-        const response = await fetchWithAuth('/api/user/me');
+        const response = await fetchWithAuth('/api/user/v1/me');
         if (!response.ok) {
             return null;
         }
