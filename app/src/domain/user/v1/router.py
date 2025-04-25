@@ -16,6 +16,7 @@ from app.src.domain.user.schemas import (
 )
 from app.src.domain.user.services import (
     create_new_user,
+    get_user_info,
     login_user,
     logout_user,
     refresh_access_token,
@@ -142,9 +143,14 @@ async def refresh_token(
     summary="내 정보 가져오기",
 )
 async def get_me(
+    db: Annotated[AsyncSession, Depends(get_db)],
     login_user: Annotated[AuthenticatedUser, Depends(registered_user)],
 ) -> UserResponse:
     """
     내 정보 가져오기
     """
-    return login_user
+    result = await get_user_info(
+        db=db,
+        user_id=login_user.user_id,
+    )
+    return result

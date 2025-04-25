@@ -115,3 +115,14 @@ async def refresh_access_token(
         refresh_token=refresh_token,
         user_id=str(user_id),
     )
+
+
+async def get_user_info(
+    db: AsyncSession,
+    user_id: UUID,
+) -> UserResponse:
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        raise AuthErrors.USER_NOT_FOUND
+
+    return UserResponse.model_validate(user)

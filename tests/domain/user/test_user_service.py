@@ -12,6 +12,7 @@ from app.src.domain.user.schemas import (
 )
 from app.src.domain.user.services import (
     create_new_user,
+    get_user_info,
     login_user,
     refresh_access_token,
 )
@@ -217,3 +218,57 @@ async def test_refresh_access_token(
         assert result.access_token is not None
         assert result.refresh_token is not None
         assert result.user_id == user_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id, expected_exception",
+    [
+        # 정상 케이스
+        (
+            "00000000-0000-0000-0000-00000000000a",
+            None,
+        ),
+        # 잘못된 사용자 ID
+        (
+            "00000000-0000-0000-0000-00000000000b",
+            AuthErrors.USER_NOT_FOUND,
+        ),
+    ],
+)
+async def test_get_user_info(
+    add_mock_user,
+    mock_db_session: AsyncSession,
+    user_id,
+    expected_exception: BaseHTTPException,
+):
+    """내 정보 가져오기 서비스 테스트"""
+
+    user: User = await add_mock_user(
+        id=UUID("00000000-0000-0000-0000-00000000000a"),
+        is_active=True,
+        nickname="test_user",
+        password="validpassword",
+    )
+
+    if expected_exception:
+        try:
+            await get_user_info(
+                db=mock_db_session,
+                user_id=UUID(user_id),
+            )
+        except BaseHTTPException as exc:
+            assert exc.status_code == expected_exception.status_code
+            assert exc.detail == expected_exception.detail
+        else:
+            pytest.fail("Expected exception was not raised.")
+    else:
+        result: UserResponse = await get_user_info(
+            db=mock_db_session,
+            user_id=UUID(user_id),
+        )
+        assert isinstance(result, UserResponse)
+        assert result.email == user.email
+        assert result.nickname == user.nickname
+        assert result.is_active == user.is_active
+        assert result.auth_level == user.auth_level
