@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LLM Chat</title>
+        <link rel="stylesheet" href="./style.css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap"
+            rel="stylesheet"
+        />
+        <!-- 아이콘 사용을 위한 Font Awesome CDN (예시) -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    </head>
+    <body>
+        <div id="app-layout">
+            <!-- 전체 레이아웃 래퍼 -->
+            <div id="sidebar">
+                <!-- 사이드바 영역 -->
+                <button id="new-chat-button"><i class="fas fa-plus"></i> 새 채팅</button>
+                <h2>채팅 목록</h2>
+                <ul>
+                    <li><a href="#">채팅 1: 프로젝트 아이디어</a></li>
+                    <li class="active"><a href="#">채팅 2: 저녁 메뉴 추천</a></li>
+                    <li><a href="#">채팅 3: 코드 리뷰 요청</a></li>
+                    <li><a href="#">채팅 4: 주말 계획</a></li>
+                    <!-- 채팅 목록은 동적으로 추가됩니다 -->
+                </ul>
+            </div>
+            <div id="chat-area">
+                <!-- 기존 채팅 영역 래퍼 -->
+                <div id="chat-header">
+                    <button id="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div id="model-selector-area">
+                        <select id="model-selector">
+                            <optgroup label="Grok">
+                                <option value="grok-3-latest">Grok 3 Latest</option>
+                                <option value="grok-3-mini-beta">Grok 3 Mini Beta</option>
+                            </optgroup>
+                            <optgroup label="Gemini">
+                                <option value="gemini-2.5-flash-preview-04-17" selected>
+                                    Gemini 2.5 Flash Preview
+                                </option>
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div id="user-profile-area">
+                        <i id="profile-icon" class="fas fa-user-circle"></i>
+                        <span id="user-nickname">닉네임</span>
+                        <div id="profile-dropdown" class="dropdown-content">
+                            <a href="#" id="settings-button"><i class="fas fa-cog"></i> 설정</a>
+                            <a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a>
+                        </div>
+                    </div>
+                </div>
+                <div id="chatbox">
+                    <!-- 채팅 메시지가 여기에 표시됩니다 -->
+                    <div class="message assistant-message">안녕하세요! 무엇을 도와드릴까요?</div>
+                </div>
+                <div id="input-area">
+                    <input type="text" id="message" placeholder="메시지를 입력하세요..." />
+                    <button onclick="sendMessage()">전송</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="./script.js" defer></script>
+    </body>
+</html>

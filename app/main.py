@@ -1,23 +1,46 @@
 # app/main.py
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.src.core.config import settings
 from app.src.core.exceptions.base_exceptions import BaseHTTPException
 from app.src.core.logger import logger
 from app.src.domain.user.v1 import router as user_router
 
 app = FastAPI()
 
-# static 디렉토리 경로 설정 (app 디렉토리 기준)
-static_dir = os.path.join(os.path.dirname(__file__), "../static")
+# CORS 설정
+if settings.ENVIRONMENT == "local":
+    origins = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:8001",
+        "http://127.0.0.1:8001",
+    ]
+elif settings.ENVIRONMENT == "dev":
+    origins = [
+        "https://dev.tuum.day",
+        "https://dev-api.tuum.day",
+    ]
+elif settings.ENVIRONMENT == "prod":
+    origins = [
+        "https://www.tuum.day",
+        "https://tuum.day",
+        "https://api.tuum.day",
+    ]
 
-# /static 경로를 static 디렉토리에 마운트
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Lifespan 핸들러
@@ -30,45 +53,6 @@ async def lifespan(app: FastAPI):
 
     # 애플리케이션 종료
     logger.info("애플리케이션 종료...")
-
-
-@app.get("/")
-async def read_index():
-    file_path = os.path.join(static_dir, "index.html")
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
-    else:
-        from fastapi.responses import HTMLResponse
-
-        return HTMLResponse(
-            content="<h1>Error: index.html not found</h1>", status_code=404
-        )
-
-
-@app.get("/login")
-async def read_login():
-    file_path = os.path.join(static_dir, "login.html")
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
-    else:
-        from fastapi.responses import HTMLResponse
-
-        return HTMLResponse(
-            content="<h1>Error: login.html not found</h1>", status_code=404
-        )
-
-
-@app.get("/signup")
-async def read_signup():
-    file_path = os.path.join(static_dir, "signup.html")
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
-    else:
-        from fastapi.responses import HTMLResponse
-
-        return HTMLResponse(
-            content="<h1>Error: signup.html not found</h1>", status_code=404
-        )
 
 
 # Custom OpenAPI 설정
@@ -95,7 +79,6 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# API 라우트 등록
 app.include_router(user_router.router, prefix="/api/user")
 
 
@@ -116,3 +99,29 @@ async def base_http_exception_handler(
             "detail": exc.detail,
         },
     )
+
+
+if settings.ENVIRONMENT == "local":
+    # 특정 HTML 페이지 서빙 라우트 (API 라우터 뒤, StaticFiles 앞)
+    @app.get("/", response_class=RedirectResponse)
+    async def read_root():
+        return RedirectResponse(url="/index.html")
+
+    @app.get("/login", response_class=FileResponse)
+    async def login_page():
+        return FileResponse("static/login.html")
+
+    @app.get("/signup", response_class=FileResponse)
+    async def signup_page():
+        return FileResponse("static/signup.html")
+
+    @app.get("/chat", response_class=FileResponse)
+    async def chat_page():
+        return FileResponse("static/chat.html")
+
+    @app.get("/home", response_class=FileResponse)
+    async def home_page():
+        return FileResponse("static/home.html")
+
+    # Static files 마운트 (가장 마지막에)
+    app.mount("/", StaticFiles(directory="static"), name="static")

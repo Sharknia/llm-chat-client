@@ -4,7 +4,19 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>로그인 - LLM Chat</title>
-        <link rel="stylesheet" href="/static/style.css" />
+        <script type="module">
+            import { getTokens } from './js/auth.js';
+
+            async function init() {
+                const tokens = await getTokens();
+                if (tokens.accessToken) {
+                    window.location.href = '/home';
+                }
+            }
+
+            init();
+        </script>
+        <link rel="stylesheet" href="./style.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -31,13 +43,6 @@
                 <div class="auth-link">계정이 없으신가요? <a href="/signup">회원가입</a></div>
             </div>
         </div>
-        <script>
-            // 로그인 폼 제출 관련 로직은 나중에 추가됩니다.
-            document.getElementById('login-form').addEventListener('submit', function (event) {
-                event.preventDefault(); // 기본 폼 제출 방지
-                console.log('Login form submitted');
-                // TODO: 로그인 API 호출 로직
-            });
-        </script>
+        <script src="./login.js?v=1" type="module"></script>
     </body>
 </html>
