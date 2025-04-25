@@ -1,3 +1,5 @@
+import { checkLoginStatus, getUserInfo, logout } from './js/auth_utils.js';
+
 const chatbox = document.getElementById('chatbox');
 const messageInput = document.getElementById('message');
 const appLayout = document.getElementById('app-layout'); // 앱 레이아웃 요소
@@ -77,13 +79,7 @@ document.getElementById('settings-button').addEventListener('click', (event) => 
     // TODO: 설정 관련 로직 구현
 });
 
-document.getElementById('logout-button').addEventListener('click', (event) => {
-    event.preventDefault(); // 기본 링크 동작 방지
-    console.log('Logout clicked!');
-    profileDropdown.classList.remove('show'); // 메뉴 닫기
-    // TODO: 실제 로그아웃 API 호출 등 추가 로직 필요
-    window.location.href = '/login'; // 로그인 페이지로 리다이렉트 추가
-});
+document.getElementById('logout-button').addEventListener('click', logout);
 
 // 드롭다운 외부 클릭 시 메뉴 닫기
 window.addEventListener('click', (event) => {
@@ -156,3 +152,54 @@ function connectWebSocket() {
 // 페이지 로드 시 WebSocket 연결 시작
 // connectWebSocket(); // WebSocket 엔드포인트 구현 후 주석 해제
 console.log('WebSocket connection logic to be added here.'); // 임시 로그
+
+// 페이지 초기화
+async function init() {
+    // 로그인 체크
+    const needLogin = await checkLoginStatus();
+    if (needLogin) return;
+
+    // 사용자 정보 표시
+    const userInfo = await getUserInfo();
+    if (userInfo) {
+        document.getElementById('user-nickname').textContent = userInfo.nickname;
+    }
+
+    // 기존 초기화 로직...
+    setupEventListeners();
+    loadChatHistory();
+}
+
+// 이벤트 리스너 설정
+function setupEventListeners() {
+    // 로그아웃 버튼
+    document.getElementById('logout-button').addEventListener('click', logout);
+
+    // 프로필 드롭다운 토글
+    const userProfileArea = document.getElementById('user-profile-area');
+    const dropdownContent = document.getElementById('profile-dropdown');
+
+    userProfileArea.addEventListener('click', () => {
+        dropdownContent.classList.toggle('show');
+    });
+
+    // 사이드바 토글
+    document.getElementById('sidebar-toggle').addEventListener('click', () => {
+        document.getElementById('app-layout').classList.toggle('sidebar-collapsed');
+    });
+
+    // 메시지 전송
+    document.getElementById('message').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+}
+
+// 채팅 기록 로드
+async function loadChatHistory() {
+    // 채팅 기록 로드 로직 구현...
+}
+
+// 페이지 로드 시 초기화
+init();

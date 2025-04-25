@@ -4,11 +4,21 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>LLM Chat - 리다이렉트</title>
-        <script>
-            window.location.href = '/login';
+        <script type="module">
+            import { checkLoginStatus } from './js/auth_utils.js';
+
+            // 로그인 체크 후 리다이렉트
+            async function init() {
+                const isLogin = await checkLoginStatus();
+                if (isLogin) {
+                    window.location.href = '/home';
+                }
+            }
+
+            init();
         </script>
     </head>
     <body>
-        <p>로그인 페이지로 이동합니다...</p>
+        <p>페이지 이동 중...</p>
     </body>
 </html>
