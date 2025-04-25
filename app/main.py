@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.src.core.config import settings
@@ -12,10 +12,6 @@ from app.src.core.logger import logger
 from app.src.domain.user.v1 import router as user_router
 
 app = FastAPI()
-
-# 로컬 환경에서만 정적 파일 서빙
-if settings.ENVIRONMENT == "local":
-    app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 
 # Lifespan 핸들러
@@ -54,7 +50,6 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# API 라우트 등록
 app.include_router(user_router.router, prefix="/api/user")
 
 
@@ -75,3 +70,23 @@ async def base_http_exception_handler(
             "detail": exc.detail,
         },
     )
+
+
+if settings.ENVIRONMENT == "local":
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+    @app.get("/")
+    async def root():
+        return RedirectResponse(url="static/index.html")
+
+    @app.get("/login")
+    async def login_page():
+        return FileResponse("static/login.html")
+
+    @app.get("/signup")
+    async def signup_page():
+        return FileResponse("static/signup.html")
+
+    @app.get("/chat")
+    async def chat_page():
+        return FileResponse("static/chat.html")
