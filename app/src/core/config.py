@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # 개발/운영 환경 구분 (선택 사항)
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = "local"
     DEBUG: bool = True
 
     class Config:
