@@ -1,4 +1,4 @@
-import { fetchWithAuth } from './auth.js';
+import { clearTokens, fetchWithAuth } from './auth.js';
 
 /**
  * 로그인 상태를 확인하는 함수
@@ -40,10 +40,11 @@ export async function getUserInfo() {
  */
 export async function logout() {
     try {
-        const response = await fetchWithAuth('/api/user/logout', {
+        const response = await fetchWithAuth('/api/user/v1/logout', {
             method: 'POST',
         });
         if (response.ok) {
+            clearTokens();
             window.location.href = '/login';
             return true;
         }
