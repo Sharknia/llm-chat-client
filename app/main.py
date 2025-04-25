@@ -73,20 +73,23 @@ async def base_http_exception_handler(
 
 
 if settings.ENVIRONMENT == "local":
-    app.mount("/static", StaticFiles(directory="static"), name="static")
+    # 특정 HTML 페이지 서빙 라우트 (API 라우터 뒤, StaticFiles 앞)
+    @app.get("/", response_class=RedirectResponse)
+    async def read_root():
+        # 루트 경로 접근 시 /login으로 리다이렉트
+        return RedirectResponse(url="/login")
 
-    @app.get("/")
-    async def root():
-        return RedirectResponse(url="static/index.html")
-
-    @app.get("/login")
+    @app.get("/login", response_class=FileResponse)
     async def login_page():
         return FileResponse("static/login.html")
 
-    @app.get("/signup")
+    @app.get("/signup", response_class=FileResponse)
     async def signup_page():
         return FileResponse("static/signup.html")
 
-    @app.get("/chat")
+    @app.get("/chat", response_class=FileResponse)
     async def chat_page():
         return FileResponse("static/chat.html")
+
+    # Static files 마운트 (가장 마지막에)
+    app.mount("/", StaticFiles(directory="static"), name="static")
