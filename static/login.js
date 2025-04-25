@@ -8,7 +8,7 @@ async function handleLogin(event) {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch(`${API_URL}/api/user/v1/login`, {
+        const response = await fetch(`${API_URL}/user/v1/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
