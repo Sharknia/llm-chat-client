@@ -6,14 +6,14 @@ const TOKEN_KEYS = {
 };
 
 // 토큰 저장
-function saveTokens(accessToken, refreshToken, userId) {
+export function saveTokens(accessToken, refreshToken, userId) {
     sessionStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
     sessionStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, refreshToken);
     sessionStorage.setItem(TOKEN_KEYS.USER_ID, userId);
 }
 
 // 토큰 가져오기
-function getTokens() {
+export function getTokens() {
     return {
         accessToken: sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN),
         refreshToken: sessionStorage.getItem(TOKEN_KEYS.REFRESH_TOKEN),
@@ -22,19 +22,19 @@ function getTokens() {
 }
 
 // 토큰 삭제 (로그아웃 시 사용)
-function clearTokens() {
+export function clearTokens() {
     sessionStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
     sessionStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
     sessionStorage.removeItem(TOKEN_KEYS.USER_ID);
 }
 
 // 토큰 존재 여부 확인
-function hasValidTokens() {
+export function hasValidTokens() {
     return !!sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
 }
 
 // API 요청 시 사용할 인증 헤더 생성
-function getAuthHeaders() {
+export function getAuthHeaders() {
     const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
     return accessToken
         ? {

@@ -1,3 +1,6 @@
+import { saveTokens } from './js/auth.js';
+import { API_URL } from './js/config.js';
+
 async function handleLogin(event) {
     event.preventDefault();
 
@@ -5,7 +8,7 @@ async function handleLogin(event) {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('/api/user/v1/login', {
+        const response = await fetch(`${API_URL}/api/user/v1/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -24,9 +27,8 @@ async function handleLogin(event) {
 
         // 토큰 저장
         saveTokens(data.access_token, data.refresh_token, data.user_id);
-        console.log(getTokens());
         // 채팅 페이지로 이동
-        // window.location.href = '/chat';
+        window.location.href = '/chat';
     } catch (error) {
         alert(error.message);
         console.error('로그인 에러:', error);

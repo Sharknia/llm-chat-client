@@ -1,3 +1,5 @@
+import { API_URL } from './js/config.js';
+
 async function handleSignup(event) {
     event.preventDefault();
 
@@ -13,7 +15,7 @@ async function handleSignup(event) {
     }
 
     try {
-        const response = await fetch('/api/user/v1/', {
+        const response = await fetch(`${API_URL}/api/user/v1/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -31,7 +33,7 @@ async function handleSignup(event) {
         }
 
         const data = await response.json();
-        alert('회원가입이 완료되었습니다.');
+        alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
         window.location.href = '/login';
     } catch (error) {
         alert(error.message);
