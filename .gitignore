@@ -46,7 +46,6 @@ doc/*.ipynb_checkpoints
 
 # Environments
 .env
-.env.*
 
 # IDEs
 .idea/

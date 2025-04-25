@@ -2,6 +2,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,6 +13,34 @@ from app.src.core.logger import logger
 from app.src.domain.user.v1 import router as user_router
 
 app = FastAPI()
+
+# CORS 설정
+if settings.ENVIRONMENT == "local":
+    origins = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:8001",
+        "http://127.0.0.1:8001",
+    ]
+elif settings.ENVIRONMENT == "dev":
+    origins = [
+        "https://dev.tuum.day",
+        "https://dev-api.tuum.day",
+    ]
+elif settings.ENVIRONMENT == "prod":
+    origins = [
+        "https://www.tuum.day",
+        "https://tuum.day",
+        "https://api.tuum.day",
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Lifespan 핸들러
