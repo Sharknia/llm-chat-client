@@ -7,15 +7,14 @@
         <script type="module">
             import { checkLoginStatus } from './js/auth_utils.js';
 
-            // 로그인 체크 후 리다이렉트
-            async function init() {
+            (async () => {
                 const isLogin = await checkLoginStatus();
-                if (isLogin) {
+                if (!isLogin) {
+                    window.location.href = '/login';
+                } else {
                     window.location.href = '/home';
                 }
-            }
-
-            init();
+            })();
         </script>
     </head>
     <body></body>

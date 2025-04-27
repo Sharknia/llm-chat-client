@@ -7,10 +7,7 @@ import { clearTokens, fetchWithAuth } from './auth.js';
 export async function checkLoginStatus() {
     try {
         const response = await fetchWithAuth('/user/v1/me');
-        if (!response.ok) {
-            return false;
-        }
-        return true;
+        return response.ok;
     } catch (error) {
         console.error('인증 확인 실패:', error);
         return false;
