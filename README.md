@@ -1,4 +1,4 @@
-# LLM Chat Client (grok-crobat)
+# tuum.day Client (grok-crobat)
 
 다양한 LLM 모델(현재 Grok 및 Gemini 지원)과 상호작용할 수 있는 간단한 Python 채팅 클라이언트입니다.
 

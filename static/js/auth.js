@@ -61,7 +61,7 @@ function forceLogout() {
  * @returns {Promise<Response|null>} 재시도 성공 시 Response, 실패 시 null
  */
 async function refreshTokenAndRetry(originalUrl, originalOptions) {
-    const { refreshToken } = getTokens();
+    const { accessToken, refreshToken, userId } = getTokens();
 
     if (!refreshToken) {
         console.error('리프레시 토큰 없음. 로그아웃 처리.');
