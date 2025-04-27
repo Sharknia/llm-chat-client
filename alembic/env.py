@@ -18,10 +18,7 @@ sys.path.insert(0, project_dir)
 
 
 # 모델 및 Base 임포트 경로 수정
-# from app.src.core.database import Base  # 기존 방식 주석 처리
-import app.src.core.database  # 상대 경로 방식으로 임포트 시도
-
-Base = app.src.core.database.Base  # Base 객체 접근
+from app.src.core.database import Base  # 기존 방식 주석 처리
 
 # ---- 추가 끝 ----
 
@@ -42,9 +39,14 @@ if config.config_file_name is not None:
 # ---- 수정 시작 ----
 # 모델을 이 시점에서 임포트하여 metadata에 등록되도록 함
 # from app.src.domain.user.models import User # 기존 방식 주석 처리
+import app.src.domain.hotdeal.models  # 추가
+import app.src.domain.mail.models  # 추가
 import app.src.domain.user.models  # 상대 경로 방식으로 임포트 시도
 
 User = app.src.domain.user.models.User  # User 클래스 접근
+Keyword = app.src.domain.hotdeal.models.Keyword  # 추가
+MailLog = app.src.domain.mail.models.MailLog  # 추가
+
 target_metadata = Base.metadata  # 우리 프로젝트의 Base.metadata 사용
 # ---- 수정 끝 ----
 
