@@ -39,4 +39,7 @@ docker-clean:
 	@echo "Removing Docker image..."
 	docker rmi $(IMAGE_NAME) 2>/dev/null || true
 
-.PHONY: dev example docker-build docker-run docker-stop docker-logs docker-clean
+.PHONY: dev example docker-build docker-run docker-stop docker-logs docker-clean makemigrations
+
+makemigrations:
+	@docker compose exec web alembic revision --autogenerate -m "$(M)"
