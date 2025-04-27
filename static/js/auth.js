@@ -109,12 +109,6 @@ async function refreshTokenAndRetry(originalUrl, originalOptions) {
  * @returns {Promise<Response>} fetch Promise
  */
 export async function fetchWithAuth(url, options = {}) {
-    // 토큰이 없다면 로그인 페이지로 리다이렉트
-    if (!hasValidTokens()) {
-        window.location.href = '/login';
-        return;
-    }
-
     const headers = getAuthHeaders();
 
     // 기존 옵션의 헤더와 병합
