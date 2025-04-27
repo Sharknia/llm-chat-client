@@ -25,4 +25,5 @@ class Keyword(Base):
     meta_data = Column(Text, nullable=True)
     wdate = Column(DateTime, default=datetime.now(UTC), nullable=False)
 
-    users = relationship("User", secondary="user_keywords", back_populates="keywords")
+    users = relationship("User", secondary="user_keywords", back_populates="keyword")
+    mail_logs = relationship("MailLog", back_populates="keyword")
