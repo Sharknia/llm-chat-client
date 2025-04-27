@@ -1,4 +1,5 @@
 # app/main.py
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -11,8 +12,6 @@ from app.src.core.config import settings
 from app.src.core.exceptions.base_exceptions import BaseHTTPException
 from app.src.core.logger import logger
 from app.src.domain.user.v1 import router as user_router
-
-app = FastAPI()
 
 # CORS 설정
 if settings.ENVIRONMENT == "local":
@@ -34,6 +33,21 @@ elif settings.ENVIRONMENT == "prod":
         "https://api.tuum.day",
     ]
 
+
+# Lifespan 핸들러
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 애플리케이션 시작
+    logger.info("애플리케이션 시작...")
+    logger.info("origins: %s", origins)
+    yield
+
+    # 애플리케이션 종료
+    logger.info("애플리케이션 종료...")
+
+
+app = FastAPI(lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -41,18 +55,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# Lifespan 핸들러
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # 애플리케이션 시작
-    logger.info("애플리케이션 시작...")
-
-    yield
-
-    # 애플리케이션 종료
-    logger.info("애플리케이션 종료...")
 
 
 # Custom OpenAPI 설정

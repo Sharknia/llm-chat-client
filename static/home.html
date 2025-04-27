@@ -42,24 +42,21 @@
         <script type="module">
             import { checkLoginStatus, getUserInfo, logout } from './js/auth_utils.js';
 
-            // 페이지 초기화
-            async function init() {
-                // 로그인 체크
-                const needLogin = await checkLoginStatus();
-                if (needLogin) return;
+            (async () => {
+                const isLogin = await checkLoginStatus();
+                if (!isLogin) {
+                    window.location.href = '/login';
+                }
+            })();
 
-                // 사용자 정보 표시
+            document.addEventListener('DOMContentLoaded', async () => {
                 const userInfo = await getUserInfo();
                 if (userInfo) {
                     document.getElementById('user-nickname').textContent = userInfo.nickname;
                 }
-            }
-
-            // 로그아웃 버튼 이벤트 리스너
-            document.getElementById('logout-button').addEventListener('click', logout);
-
-            // 페이지 로드 시 초기화
-            init();
+                // 로그아웃 버튼 이벤트 리스너 설정
+                document.getElementById('logout-button').addEventListener('click', logout);
+            });
         </script>
     </body>
 </html>
