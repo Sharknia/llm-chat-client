@@ -10,10 +10,7 @@ ASYNC_DATABASE_URL = settings.DATABASE_URL.replace(
 
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
-    echo=settings.DEBUG,  # DEBUG 설정에 따라 SQL 로깅 제어
-    connect_args={
-        "statement_cache_size": 0,
-    },
+    echo=settings.DEBUG,
     pool_pre_ping=False,
     pool_recycle=3600,
 )
