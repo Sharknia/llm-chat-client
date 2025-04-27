@@ -8,6 +8,9 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+import app.src.domain.hotdeal.models
+import app.src.domain.mail.models
+import app.src.domain.user.models
 from app.src.core.config import settings
 from app.src.core.exceptions.base_exceptions import BaseHTTPException
 from app.src.core.logger import logger

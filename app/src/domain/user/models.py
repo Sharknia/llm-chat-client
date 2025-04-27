@@ -43,5 +43,5 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    keywords = relationship("Keyword", secondary=user_keywords, back_populates="user")
+    keywords = relationship("Keyword", secondary=user_keywords, back_populates="users")
     mail_logs = relationship("MailLog", back_populates="user")
