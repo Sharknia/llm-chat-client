@@ -1,12 +1,20 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import relationship
 
 from app.src.core.database import Base
 
 
 class Keyword(Base):
-    __tablename__ = "keywords"
+    __tablename__ = "hotdeal_keywords"
     __table_args__ = (UniqueConstraint("title", name="uq_keywords_title"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -16,3 +24,5 @@ class Keyword(Base):
     price = Column(String, nullable=True)
     meta_data = Column(Text, nullable=True)
     wdate = Column(DateTime, default=datetime.now(UTC), nullable=False)
+
+    users = relationship("User", secondary="user_keywords", back_populates="keywords")

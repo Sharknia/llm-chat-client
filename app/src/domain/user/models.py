@@ -1,11 +1,29 @@
 from uuid import uuid4
 
-from sqlalchemy import UUID, Boolean, Column, DateTime, Integer, String, text
+from sqlalchemy import (
+    UUID,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    text,
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.src.core.database import Base
 
 from .enums import AuthLevel
+
+user_keywords = Table(
+    "user_keywords",
+    Base.metadata,
+    Column("user_id", UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True),
+    Column("keyword_id", Integer, ForeignKey("hotdeal_keywords.id"), primary_key=True),
+)
 
 
 class User(Base):
@@ -24,3 +42,5 @@ class User(Base):
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    keywords = relationship("Keyword", secondary=user_keywords, back_populates="users")
