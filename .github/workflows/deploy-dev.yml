@@ -19,9 +19,9 @@ jobs:
             - name: Deploy via SSH
               uses: appleboy/ssh-action@v0.1.9
               with:
-                  host: ${{ secrets.DEV_SSH_HOST }}
-                  username: ${{ secrets.DEV_SSH_USER }}
-                  key: ${{ secrets.DEV_SSH_KEY }}
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USER }}
+                  key: ${{ secrets.SSH_KEY }}
                   script: |
                       set -e
                       cd ~/develop/llm-chat-client   # Dev 서버의 실제 경로로 변경
