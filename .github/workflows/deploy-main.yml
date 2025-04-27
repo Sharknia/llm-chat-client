@@ -1,0 +1,29 @@
+name: Deploy to Dev on Tag
+
+on:
+    push:
+        tags:
+            - '*main*'
+
+jobs:
+    deploy:
+        name: 🚀 Deploy main server
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Deploy via SSH
+              uses: appleboy/ssh-action@v0.1.9
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USER }}
+                  key: ${{ secrets.SSH_KEY }}
+                  script: |
+                      set -e
+                      cd ~/prod/llm-chat-client
+                      git pull origin main
+                      make docker-run
