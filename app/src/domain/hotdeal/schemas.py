@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from pydantic import BaseModel
 
 
@@ -9,4 +7,3 @@ class CrawledKeyword(BaseModel):
     link: str | None = None
     price: str | None = None
     meta_data: str | None = None
-    wdate: str = datetime.now().isoformat()
