@@ -53,5 +53,9 @@ async def add_my_keyword(
     keyword = await db.get(Keyword, keyword_id)
 
     if user and keyword:
+        # 이미 등록된 키워드인지 확인
+        if keyword in user.keywords:
+            raise ValueError("이미 등록된 키워드입니다.")
+
         user.keywords.append(keyword)
         await db.commit()

@@ -34,7 +34,10 @@ async def register_keyword(
     if my_keyword_count >= 10:
         raise ClientErrors.KEYWORD_COUNT_OVERFLOW
     # 내 키워드로 등록
-    await add_my_keyword(db, user_id, keyword.id)
+    try:
+        await add_my_keyword(db, user_id, keyword.id)
+    except:
+        raise ClientErrors.DUPLICATE_KEYWORD_REGISTRATION
     return KeywordResponse(
         title=keyword.title,
     )

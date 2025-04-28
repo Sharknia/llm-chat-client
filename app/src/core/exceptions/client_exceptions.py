@@ -10,3 +10,10 @@ class ClientErrors:
         detail="Keyword count overflow",
         description="BAD REQUEST",
     )
+
+    # 중복 키워드 등록
+    DUPLICATE_KEYWORD_REGISTRATION = BaseHTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Duplicate keyword registration",
+        description="DUPLICATE KEYWORD REGISTRATION",
+    )
