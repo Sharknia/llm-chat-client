@@ -108,11 +108,11 @@ async def mock_client(
 def mock_user_data():
     """User 모델 예시"""
     return {
-        "id": "00000000-0000-0000-0000-000000000000",
+        "id": "00000000-0000-0000-0000-00000000000a",
         "email": "test@example.com",
         "password": "hashed_password",
         "nickname": "test_user",
-        "is_active": False,
+        "is_active": True,
         "created_at": "2024-12-31T12:00:00Z",
         "updated_at": "2024-12-31T12:00:00Z",
         "auth_level": AuthLevel.USER,
@@ -123,8 +123,8 @@ def mock_user_data():
 @pytest.fixture
 def mock_authenticated_user():
     return AuthenticatedUser(
-        user_id="00000000-0000-0000-0000-000000000000",
-        email="user@exmaple.com",
+        user_id="00000000-0000-0000-0000-00000000000a",
+        email="test@example.com",
         nickname="test_user",
         auth_level=AuthLevel.USER,
     )
@@ -136,7 +136,7 @@ def mock_login_response():
     return {
         "access_token": "access_token_example",
         "refresh_token": "refresh_token_example",
-        "user_id": "00000000-0000-0000-0000-000000000000",
+        "user_id": "00000000-0000-0000-0000-00000000000a",
     }
 
 
