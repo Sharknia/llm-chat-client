@@ -4,6 +4,8 @@ CONTAINER_NAME = crobat-server-container
 
 # Docker Compose 로 개발 환경 실행
 dev:
+	@echo "Cleaning up dangling images..."
+	docker image prune -f
 	@echo "Starting services with Docker Compose..."
 	@echo "Ensure .env file is created and configured."
 	docker compose up --build
