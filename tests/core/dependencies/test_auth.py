@@ -1,29 +1,27 @@
-import uuid  # uuid 임포트 추가
+import uuid
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from jose import jwt
-from sqlalchemy.ext.asyncio import AsyncSession  # AsyncSession 임포트 (모킹용)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.config import (
-    settings,  # 설정값 (SECRET_KEY, REFRESH_TOKEN_SECRET_KEY)
+    settings,
 )
 
 # 테스트 대상 함수 및 관련 모듈 임포트
 from app.src.core.dependencies.auth import (
     ALGORITHM,
-    authenticate_admin_user,  # authenticate_admin_user 임포트 추가
-    authenticate_user,  # authenticate_user 임포트 추가
+    authenticate_admin_user,
+    authenticate_user,
     create_access_token,
-    create_refresh_token,  # create_refresh_token 추가
-    registered_user,  # registered_user 임포트 추가
+    create_refresh_token,
+    registered_user,
 )
-from app.src.core.exceptions.auth_excptions import AuthErrors  # AuthErrors 임포트 추가
-from app.src.domain.user.enums import AuthLevel  # AuthLevel Enum
-from app.src.domain.user.schemas import (
-    AuthenticatedUser,  # AuthenticatedUser 스키마 임포트
-)
+from app.src.core.exceptions.auth_excptions import AuthErrors
+from app.src.domain.user.enums import AuthLevel
+from app.src.domain.user.schemas import AuthenticatedUser
 
 
 # pytest-asyncio 데코레이터
