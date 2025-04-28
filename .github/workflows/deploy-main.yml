@@ -1,4 +1,4 @@
-name: Deploy to Dev on Tag
+name: Deploy to Main on Tag
 
 on:
     push:

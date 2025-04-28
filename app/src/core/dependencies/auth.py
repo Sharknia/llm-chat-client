@@ -130,7 +130,6 @@ async def authenticate_refresh_token(
 
     # 토큰 추출
     token = authorization.split(" ")[1]
-
     try:
         # 토큰 검증 및 디코딩
         payload = jwt.decode(
@@ -144,9 +143,9 @@ async def authenticate_refresh_token(
 
         # db에 저장된 리프레시 토큰과 비교
         try:
-            if not await verify_refresh_token(db, user_id, token):
+            user = await verify_refresh_token(db, user_id, token)
+            if not user:
                 raise AuthErrors.INVALID_TOKEN
-        # 유저가 발견되지 않은 경우
         except ValueError as e:
             raise AuthErrors.INVALID_TOKEN from e
 
@@ -155,7 +154,10 @@ async def authenticate_refresh_token(
 
         # 인증된 사용자 정보 반환
         return AuthenticatedUser(
-            user_id=user_id, email=email, auth_level=AuthLevel.USER
+            user_id=user_id,
+            email=email,
+            nickname=user.nickname,
+            auth_level=AuthLevel.USER,
         )
 
     except ExpiredSignatureError as e:

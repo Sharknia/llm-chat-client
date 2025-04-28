@@ -164,13 +164,13 @@ async def verify_refresh_token(
     db: AsyncSession,
     user_id: UUID,
     token: str,
-) -> bool:
+) -> User | None:
     """제공된 리프레시 토큰이 저장된 토큰과 일치하는지 확인합니다."""
-    result = await db.execute(select(User.refresh_token).where(User.id == user_id))
-    stored_token = result.scalar_one_or_none()
-    if stored_token is None:
-        raise ValueError("User not found or no refresh token stored")
-    return stored_token == token
+    result = await db.execute(
+        select(User).where(User.id == user_id).where(User.refresh_token == token)
+    )
+    user: User | None = result.scalar_one_or_none()
+    return user
 
 
 async def delete_refresh_token(

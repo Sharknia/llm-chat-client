@@ -21,6 +21,13 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"
     DEBUG: bool = True
 
+    # 메일링 관련 설정
+    SMTP_SERVER: str = "smtp.kakao.com"
+    SMTP_PORT: int = 465
+    SMTP_EMAIL: str = "hotdeal@tuum.day"
+    SMTP_PASSWORD: str = "hotdeal1234"
+    SMTP_FROM: str = "hotdeal@tuum.day"
+
     class Config:
         # .env 파일 경로 명시 (기본값은 프로젝트 루트의 .env)
         env_file = ".env"
