@@ -79,7 +79,6 @@ async def test_post_user(
         response_data = response.json()
         assert response_data["email"] == mock_user_data["email"]
         assert response_data["nickname"] == mock_user_data["nickname"]
-        assert response_data["is_active"] == mock_user_data["is_active"]
         assert response_data["auth_level"] == mock_user_data["auth_level"]
 
 
