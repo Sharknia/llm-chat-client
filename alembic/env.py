@@ -39,14 +39,14 @@ if config.config_file_name is not None:
 # ---- 수정 시작 ----
 # 모델을 이 시점에서 임포트하여 metadata에 등록되도록 함
 # from app.src.domain.user.models import User # 기존 방식 주석 처리
-import app.src.domain.hotdeal.models  # 추가
-import app.src.domain.mail.models  # 추가
-import app.src.domain.user.models  # 상대 경로 방식으로 임포트 시도
+import app.src.domain.hotdeal.models
+import app.src.domain.mail.models
+import app.src.domain.user.models
 
-User = app.src.domain.user.models.User  # User 클래스 접근
-Keyword = app.src.domain.hotdeal.models.Keyword  # 추가
-MailLog = app.src.domain.mail.models.MailLog  # 추가
-
+User = app.src.domain.user.models.User
+Keyword = app.src.domain.hotdeal.models.Keyword
+MailLog = app.src.domain.mail.models.MailLog
+KeywordSite = app.src.domain.hotdeal.models.KeywordSite
 target_metadata = Base.metadata  # 우리 프로젝트의 Base.metadata 사용
 # ---- 수정 끝 ----
 

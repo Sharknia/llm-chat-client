@@ -7,3 +7,11 @@ class CrawledKeyword(BaseModel):
     link: str | None = None
     price: str | None = None
     meta_data: str | None = None
+
+
+class KeywordCreateRequest(BaseModel):
+    title: str
+
+
+class KeywordResponse(BaseModel):
+    title: str

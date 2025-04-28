@@ -228,7 +228,7 @@ async def test_post_user_logout(
             {
                 "access_token": "access_token_example",
                 "refresh_token": "refresh_token_example",
-                "user_id": "00000000-0000-0000-0000-000000000000",
+                "user_id": "00000000-0000-0000-0000-00000000000a",
             },
         ),
         # 인증 실패
