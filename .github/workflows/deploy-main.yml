@@ -26,4 +26,5 @@ jobs:
                       set -e
                       cd ~/prod/llm-chat-client
                       git pull origin main
+                      make docker-build
                       make docker-run
