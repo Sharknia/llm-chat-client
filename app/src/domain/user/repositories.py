@@ -173,11 +173,11 @@ async def verify_refresh_token(
     return user
 
 
-async def delete_refresh_token(
+async def init_refresh_token(
     db: AsyncSession,
     user_id: UUID,
 ) -> None:
-    """사용자의 리프레시 토큰을 삭제합니다 (None으로 설정)."""
+    """사용자의 리프레시 토큰을 초기화합니다 (None으로 설정)."""
     stmt = update(User).where(User.id == user_id).values(refresh_token=None)
     await db.execute(stmt)
     await db.commit()

@@ -135,7 +135,6 @@ def mock_login_response():
     """로그인 성공 응답 데이터"""
     return {
         "access_token": "access_token_example",
-        "refresh_token": "refresh_token_example",
         "user_id": "00000000-0000-0000-0000-00000000000a",
     }
 

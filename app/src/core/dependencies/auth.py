@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, Header
+from fastapi import Cookie, Depends, Header, Response
 from jose import ExpiredSignatureError, JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +12,7 @@ from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.domain.user.enums import AuthLevel
 from app.src.domain.user.repositories import (
     check_user_active,
-    delete_refresh_token,
+    init_refresh_token,
     save_refresh_token,
     verify_refresh_token,
 )
@@ -46,6 +46,7 @@ async def create_access_token(
 
 async def create_refresh_token(
     db: AsyncSession,
+    response: Response,
     user_id: UUID,
     email: str,
     expires_delta: timedelta = timedelta(days=7),
@@ -64,7 +65,32 @@ async def create_refresh_token(
         payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm=ALGORITHM
     )
     await save_refresh_token(db, user_id, refresh_token)
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path="/",
+        max_age=expires_delta.total_seconds(),
+    )
     return refresh_token
+
+
+async def delete_refresh_token(
+    db: AsyncSession,
+    response: Response,
+    user_id: UUID,
+) -> None:
+    await init_refresh_token(db, user_id)
+    response.delete_cookie(
+        key="refresh_token",
+        path="/",  # 쿠키를 설정할 때와 동일한 path를 써야 합니다.
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
+    return None
 
 
 async def registered_user(
@@ -117,25 +143,23 @@ async def registered_user(
         raise AuthErrors.INVALID_TOKEN from e
 
 
-# 헤더에 담겨온 리프레쉬 토큰 검증
+# 쿠키에 담겨온 리프레시 토큰 검증
 async def authenticate_refresh_token(
     db: Annotated[AsyncSession, Depends(get_db)],
-    authorization: str = Header(None),
+    refresh_token: str = Cookie(None),
 ) -> AuthenticatedUser:
     """
     리프레시 토큰 검증 함수
     """
-    if not authorization or not authorization.startswith("Bearer "):
+    if not refresh_token:
         raise AuthErrors.INVALID_TOKEN
-
-    # 토큰 추출
-    token = authorization.split(" ")[1]
+    token = refresh_token
     try:
         # 토큰 검증 및 디코딩
         payload = jwt.decode(
             token, settings.REFRESH_TOKEN_SECRET_KEY, algorithms=[ALGORITHM]
         )
-        user_id: int = payload.get("user_id")
+        user_id = payload.get("user_id")
         email: str = payload.get("email")
 
         if user_id is None or email is None:
@@ -149,7 +173,7 @@ async def authenticate_refresh_token(
         except ValueError as e:
             raise AuthErrors.INVALID_TOKEN from e
 
-        # 사용된 리프레시 토큰 삭제
+        # 사용된 리프레시 토큰 삭제 및 쿠키 제거
         await delete_refresh_token(db, user_id)
 
         # 인증된 사용자 정보 반환

@@ -26,7 +26,7 @@ async function handleLogin(event) {
         const data = await response.json();
 
         // 토큰 저장
-        saveTokens(data.access_token, data.refresh_token, data.user_id);
+        saveTokens(data.access_token, data.user_id);
         // 홈 페이지로 이동
         window.location.href = '/home';
     } catch (error) {
