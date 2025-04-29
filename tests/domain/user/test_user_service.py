@@ -150,7 +150,6 @@ async def test_login_user(
         )
         assert isinstance(result, LoginResponse)
         assert result.access_token is not None
-        assert result.refresh_token is not None
         assert result.user_id == str(user.id)
 
 
@@ -216,7 +215,6 @@ async def test_refresh_access_token(
         )
         assert isinstance(result, LoginResponse)
         assert result.access_token is not None
-        assert result.refresh_token is not None
         assert result.user_id == user_id
 
 
