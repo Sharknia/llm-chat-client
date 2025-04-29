@@ -1,6 +1,7 @@
 from uuid import UUID
 
 import pytest
+from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.exceptions.auth_excptions import AuthErrors
@@ -129,11 +130,12 @@ async def test_login_user(
         nickname="test_user",
         is_active=is_active,
     )
-
+    response = Response()
     if expected_exception:
         try:
             await login_user(
                 db=mock_db_session,
+                response=response,
                 email=email,
                 password=password,
             )
@@ -145,6 +147,7 @@ async def test_login_user(
     else:
         result: LoginResponse = await login_user(
             db=mock_db_session,
+            response=response,
             email=email,
             password=password,
         )
@@ -185,7 +188,7 @@ async def test_refresh_access_token(
     expected_exception: BaseHTTPException,
 ):
     """액세스 토큰 갱신 서비스 테스트"""
-
+    response = Response()
     # 테스트를 위한 초기 데이터 추가
     if email == "test@example.com":
         user: User = await add_mock_user(
@@ -199,6 +202,7 @@ async def test_refresh_access_token(
         try:
             await refresh_access_token(
                 db=mock_db_session,
+                response=response,
                 user_id=UUID(user_id),
                 email=email,
             )
@@ -210,6 +214,7 @@ async def test_refresh_access_token(
     else:
         result: LoginResponse = await refresh_access_token(
             db=mock_db_session,
+            response=response,
             user_id=UUID(user_id),
             email=email,
         )
