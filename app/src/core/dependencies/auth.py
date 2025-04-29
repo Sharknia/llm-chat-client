@@ -145,7 +145,7 @@ async def registered_user(
 
 # 쿠키에 담겨온 리프레시 토큰 검증
 async def authenticate_refresh_token(
-    db: AsyncSession,
+    db: Annotated[AsyncSession, Depends(get_db)],
     refresh_token: str = Cookie(None),
 ) -> AuthenticatedUser:
     """
