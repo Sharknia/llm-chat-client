@@ -69,11 +69,11 @@ async def delete_my_keyword(
     return
 
 
-# 내 키워드 리스토 보기
+# 내 키워드 리스트 보기
 @router.get(
     "/keywords",
     status_code=status.HTTP_200_OK,
-    summary="내 키워드 리스토 보기",
+    summary="내 키워드 리스트 보기",
     responses=create_responses(
         AuthErrors.INVALID_TOKEN,
         AuthErrors.INVALID_TOKEN_PAYLOAD,
