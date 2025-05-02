@@ -14,4 +14,5 @@ class KeywordCreateRequest(BaseModel):
 
 
 class KeywordResponse(BaseModel):
+    id: int
     title: str

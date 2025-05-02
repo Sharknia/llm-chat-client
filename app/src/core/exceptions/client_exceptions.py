@@ -17,3 +17,10 @@ class ClientErrors:
         detail="Duplicate keyword registration",
         description="DUPLICATE KEYWORD REGISTRATION",
     )
+
+    # 키워드 존재하지 않음
+    KEYWORD_NOT_FOUND = BaseHTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Keyword not found",
+        description="KEYWORD NOT FOUND",
+    )

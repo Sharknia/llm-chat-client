@@ -8,8 +8,13 @@ from app.src.domain.hotdeal.models import Keyword
 from app.src.domain.hotdeal.repositories import (
     add_my_keyword,
     create_keyword,
+    delete_keyword,
     get_keyword_by_title,
     get_my_keyword_count,
+    is_keyword_used,
+    is_my_keyword,
+    select_users_keywords,
+    unlink_user_keyword,
 )
 from app.src.domain.hotdeal.schemas import KeywordResponse
 from app.src.domain.hotdeal.utils import normalize_keyword
@@ -39,5 +44,34 @@ async def register_keyword(
     except:
         raise ClientErrors.DUPLICATE_KEYWORD_REGISTRATION
     return KeywordResponse(
+        id=keyword.id,
         title=keyword.title,
     )
+
+
+async def unlink_keyword(
+    db: AsyncSession,
+    keyword_id: int,
+    user_id: UUID,
+) -> None:
+    # 내가 해당 키워드를 가지고 있는지 확인
+    has_keyword: bool = await is_my_keyword(db, user_id, keyword_id)
+    if not has_keyword:
+        raise ClientErrors.KEYWORD_NOT_FOUND
+    # 가지고 있다면 연결을 끊는다.
+    await unlink_user_keyword(db, user_id, keyword_id)
+    # 연결을 끊은 후 해당 키워드를 가지고 있는 사람이 있는지 확인
+    is_used: bool = await is_keyword_used(db, keyword_id)
+    # 사람이 없다면 키워드를 삭제한다.
+    if not is_used:
+        await delete_keyword(db, keyword_id)
+    return
+
+
+async def view_users_keywords(
+    db: AsyncSession,
+    user_id: UUID,
+) -> list[KeywordResponse]:
+    # 유저의 키워드 리스트 조회
+    keywords: list[Keyword] = await select_users_keywords(db, user_id)
+    return [KeywordResponse(id=keyword.id, title=keyword.title) for keyword in keywords]
