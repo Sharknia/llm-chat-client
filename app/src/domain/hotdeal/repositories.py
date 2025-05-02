@@ -73,15 +73,33 @@ async def is_my_keyword(
 
 
 # 내 키워드 연결 끊기
-async def unlink_keyword(
+async def unlink_user_keyword(
     db: AsyncSession,
     user_id: UUID,
     keyword_id: int,
 ) -> None:
-    # user_keywords 테이블에서 직접 관계 삭제
     delete_query = delete(user_keywords).where(
         (user_keywords.c.user_id == user_id)
         & (user_keywords.c.keyword_id == keyword_id)
     )
     await db.execute(delete_query)
     await db.commit()
+
+
+# 키워드가 사용중인지 확인
+async def is_keyword_used(
+    db: AsyncSession,
+    keyword_id: int,
+) -> bool:
+    exists_query = select(exists().where(user_keywords.c.keyword_id == keyword_id))
+    result = await db.execute(exists_query)
+    return result.scalar()
+
+
+# 키워드 삭제
+async def delete_keyword(
+    db: AsyncSession,
+    keyword_id: int,
+) -> None:
+    delete_query = delete(Keyword).where(Keyword.id == keyword_id)
+    await db.execute(delete_query)

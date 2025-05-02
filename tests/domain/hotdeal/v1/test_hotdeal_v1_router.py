@@ -12,17 +12,20 @@ from app.src.domain.hotdeal.schemas import KeywordResponse
         # 정상 요청
         (
             {
+                "id": 1,
                 "title": "Keyword",
             },
             201,
             None,
             {
+                "id": 1,
                 "title": "keyword",
             },
         ),
         # 키워드 갯수 초과
         (
             {
+                "id": 1,
                 "title": "Keyword",
             },
             ClientErrors.KEYWORD_COUNT_OVERFLOW.status_code,
@@ -56,7 +59,7 @@ async def test_post_keyword(
     else:
         mocker.patch(
             "app.src.domain.hotdeal.v1.router.register_keyword",
-            return_value=KeywordResponse(title="keyword"),
+            return_value=KeywordResponse(id=1, title="keyword"),
         )
 
     # API 호출
@@ -70,3 +73,58 @@ async def test_post_keyword(
     else:
         response_data = response.json()
         assert response_data["title"] == "keyword"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "keyword_id, expected_status, mock_side_effect, expected_response",
+    [
+        # 정상 요청
+        (
+            1,
+            204,
+            None,
+            None,
+        ),
+        # 키워드 존재하지 않음
+        (
+            1,
+            ClientErrors.KEYWORD_NOT_FOUND.status_code,
+            ClientErrors.KEYWORD_NOT_FOUND,
+            None,
+        ),
+    ],
+)
+async def test_delete_my_keyword(
+    mocker,
+    mock_client,
+    mock_authenticated_user,
+    override_registered_user,
+    keyword_id,
+    expected_status,
+    mock_side_effect,
+    expected_response,
+):
+    """내 키워드 삭제 API 테스트"""
+    # 테스트용 인증 유저 오버라이드
+    override_registered_user(mock_authenticated_user)
+
+    if mock_side_effect:
+        mocker.patch(
+            "app.src.domain.hotdeal.v1.router.unlink_keyword",
+            side_effect=mock_side_effect,
+        )
+    else:
+        mocker.patch(
+            "app.src.domain.hotdeal.v1.router.unlink_keyword",
+            return_value=None,
+        )
+
+    # API 호출
+    response: Response = mock_client.delete(f"/api/hotdeal/v1/keywords/{keyword_id}")
+
+    # 응답 검증
+    assert response.status_code == expected_status
+
+    if expected_response:
+        assert response.json() == expected_response
