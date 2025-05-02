@@ -29,6 +29,8 @@ async def register_keyword(
 ) -> KeywordResponse:
     # 키워드에서 공백 제거하고 소문자로 변환
     title = normalize_keyword(title)
+    if len(title) == 0:
+        raise ClientErrors.INVALID_KEYWORD_TITLE
     # 이미 존재하는 키워드인지 확인
     keyword: Keyword | None = await get_keyword_by_title(db, title)
     # 존재하지 않을 경우 키워드 등록
