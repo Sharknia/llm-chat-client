@@ -24,3 +24,10 @@ class ClientErrors:
         detail="Keyword not found",
         description="KEYWORD NOT FOUND",
     )
+
+    # 키워드 제목이 유효하지 않음
+    INVALID_KEYWORD_TITLE = BaseHTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid keyword title",
+        description="INVALID KEYWORD TITLE",
+    )
