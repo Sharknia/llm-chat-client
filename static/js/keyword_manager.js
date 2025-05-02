@@ -43,9 +43,8 @@ export async function addKeyword(title) {
         return;
     }
     // title에 특수문자가 포함되어 있으면 추가 불가
-    if (title.match(/[^\w\s]/)) {
+    if (title.match(/[^\w\s가-힣]/)) {
         alert('키워드에 특수문자를 포함할 수 없습니다.');
-        // 입력창 초기화
         keywordInputElement.value = '';
         return;
     }
