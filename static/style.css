@@ -18,6 +18,9 @@
     --scrollbar-thumb-hover-color: #a1a1a1;
     --shadow-color: rgba(0, 0, 0, 0.1);
 
+    /* Icons */
+    --main-icon-url: url('https://ktlnpawucfuxjbufkplf.supabase.co/storage/v1/object/public/pb//tuum.png');
+
     /* Fonts */
     --font-family-base: 'Noto Sans KR', sans-serif;
     --font-size-base: 14px;
@@ -473,10 +476,22 @@ button:hover {
     align-items: center;
 }
 
+.nav-left {
+    display: flex;
+    align-items: center;
+}
+
 .nav-left h1 {
     margin: 0;
-    color: #333;
-    font-size: 1.5rem;
+    font-size: var(--font-size-h1);
+    font-weight: 700;
+    color: var(--text-dark-color);
+}
+
+.nav-logo {
+    height: 50px; /* 로고 높이 설정 */
+    margin-right: var(--spacing-sm); /* 로고와 텍스트 사이 간격 */
+    vertical-align: middle; /* 텍스트와 수직 정렬 */
 }
 
 .nav-right {

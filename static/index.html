@@ -6,13 +6,19 @@
         <title>tuum.day - 리다이렉트</title>
         <script type="module">
             import { checkLoginStatus } from './js/auth_utils.js';
+            import { getTokens } from './js/auth.js';
 
             (async () => {
-                const isLogin = await checkLoginStatus();
-                if (!isLogin) {
+                const accessToken = getTokens().accessToken;
+                if (!accessToken) {
                     window.location.href = '/login';
                 } else {
-                    window.location.href = '/home';
+                    const isLogin = await checkLoginStatus();
+                    if (!isLogin) {
+                        window.location.href = '/login';
+                    } else {
+                        window.location.href = '/home';
+                    }
                 }
             })();
         </script>
