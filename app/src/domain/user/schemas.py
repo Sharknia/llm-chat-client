@@ -32,7 +32,6 @@ class UserResponse(BaseModel):
 # 로그인 응답 스키마
 class LoginResponse(BaseModel):
     access_token: str
-    refresh_token: str
     user_id: str
 
 

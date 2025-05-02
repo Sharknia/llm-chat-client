@@ -1,15 +1,19 @@
 from uuid import UUID
 
+from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.config import settings
-from app.src.core.dependencies.auth import create_access_token, create_refresh_token
+from app.src.core.dependencies.auth import (
+    create_access_token,
+    create_refresh_token,
+    delete_refresh_token,
+)
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.core.security import hash_password, verify_password
 from app.src.domain.user.enums import AuthLevel
 from app.src.domain.user.repositories import (
     create_user,
-    delete_refresh_token,
     get_user_by_email,
     get_user_by_id,
 )
@@ -54,6 +58,7 @@ async def create_new_user(
 
 async def login_user(
     db: AsyncSession,
+    response: Response,
     email: str,
     password: str,
 ) -> LoginResponse:
@@ -67,16 +72,25 @@ async def login_user(
     if not user.is_active:
         raise AuthErrors.USER_NOT_ACTIVE
 
+    await create_refresh_token(
+        db=db,
+        response=response,
+        user_id=user.id,
+        email=user.email,
+    )
     return LoginResponse(
         access_token=await create_access_token(
             user.id, user.email, user.nickname, user.auth_level
         ),
-        refresh_token=await create_refresh_token(db, user.id, user.email),
         user_id=str(user.id),
     )
 
 
-async def logout_user(db: AsyncSession, user_id: UUID) -> None:
+async def logout_user(
+    db: AsyncSession,
+    response: Response,
+    user_id: UUID,
+) -> None:
     # 실제 있는 유저인지 확인
     user = await get_user_by_id(db, user_id)
     if not user:
@@ -87,12 +101,13 @@ async def logout_user(db: AsyncSession, user_id: UUID) -> None:
         raise AuthErrors.USER_NOT_ACTIVE
 
     # 액세스 토큰을 블랙리스트에 등록하는 로직은 생략
-    await delete_refresh_token(db, user_id)
+    await delete_refresh_token(db, response, user_id)
     return None
 
 
 async def refresh_access_token(
     db: AsyncSession,
+    response: Response,
     user_id: UUID,
     email: str,
 ) -> LoginResponse:
@@ -109,14 +124,15 @@ async def refresh_access_token(
         nickname=user.nickname,
         auth_level=user.auth_level,
     )
-    refresh_token = await create_refresh_token(
+    await create_refresh_token(
         db=db,
+        response=response,
         user_id=user_id,
         email=email,
     )
+
     return LoginResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
         user_id=str(user_id),
     )
 

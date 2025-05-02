@@ -3,14 +3,12 @@ import { API_URL } from './config.js';
 // 토큰 관리를 위한 키 상수
 const TOKEN_KEYS = {
     ACCESS_TOKEN: 'access_token',
-    REFRESH_TOKEN: 'refresh_token',
     USER_ID: 'user_id',
 };
 
 // 토큰 저장
-export function saveTokens(accessToken, refreshToken, userId) {
+export function saveTokens(accessToken, userId) {
     sessionStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
-    sessionStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, refreshToken);
     sessionStorage.setItem(TOKEN_KEYS.USER_ID, userId);
 }
 
@@ -18,7 +16,6 @@ export function saveTokens(accessToken, refreshToken, userId) {
 export function getTokens() {
     return {
         accessToken: sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN),
-        refreshToken: sessionStorage.getItem(TOKEN_KEYS.REFRESH_TOKEN),
         userId: sessionStorage.getItem(TOKEN_KEYS.USER_ID),
     };
 }
@@ -26,7 +23,6 @@ export function getTokens() {
 // 토큰 삭제 (로그아웃 시 사용)
 export function clearTokens() {
     sessionStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
-    sessionStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
     sessionStorage.removeItem(TOKEN_KEYS.USER_ID);
 }
 
@@ -61,13 +57,7 @@ function forceLogout() {
  * @returns {Promise<Response|null>} 재시도 성공 시 Response, 실패 시 null
  */
 async function refreshTokenAndRetry(originalUrl, originalOptions) {
-    const { accessToken, refreshToken, userId } = getTokens();
-
-    if (!refreshToken) {
-        console.error('리프레시 토큰 없음. 로그아웃 처리.');
-        forceLogout();
-        return null; // 재시도 불가
-    }
+    const { accessToken, userId } = getTokens();
 
     console.log('액세스 토큰 갱신 시도...');
 
@@ -76,29 +66,22 @@ async function refreshTokenAndRetry(originalUrl, originalOptions) {
         // 또한, 이 요청의 Authorization 헤더에는 리프레시 토큰을 사용해야 함.
         const refreshResponse = await fetch(`${API_URL}/user/v1/token/refresh`, {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${refreshToken}`,
-                'Content-Type': 'application/json', // 필요시 추가
-            },
-            // body: JSON.stringify({}) // POST 요청 시 빈 바디라도 필요할 수 있음
         });
 
         if (refreshResponse.ok) {
             const data = await refreshResponse.json();
-            saveTokens(data.access_token, data.refresh_token, data.user_id);
+            saveTokens(data.access_token, data.user_id);
             console.log('토큰 갱신 성공. 원래 요청 재시도:', originalUrl);
-            // 갱신된 토큰으로 원래 요청 재시도
-            // 재시도 시에는 반드시 원래의 options 객체를 다시 전달해야 함
             return fetchWithAuth(originalUrl, originalOptions);
         } else {
             console.error('토큰 갱신 실패:', refreshResponse.status, await refreshResponse.text());
             forceLogout();
-            return null; // 재시도 실패
+            return null;
         }
     } catch (error) {
         console.error('토큰 갱신 중 네트워크 오류 또는 기타 문제 발생:', error);
         forceLogout();
-        return null; // 재시도 실패
+        return null;
     }
 }
 

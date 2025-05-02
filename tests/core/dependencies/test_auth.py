@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from fastapi import Response
 from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -80,12 +81,14 @@ async def test_create_refresh_token():
 
     # DB 세션 모킹
     mock_db = AsyncMock(spec=AsyncSession)
+    mock_response = AsyncMock(spec=Response)
 
     # save_refresh_token 함수 모킹 (auth 모듈 내에서 참조되는 경로)
     with patch("app.src.core.dependencies.auth.save_refresh_token") as mock_save_token:
         # 리프레시 토큰 생성
         token = await create_refresh_token(
             db=mock_db,
+            response=mock_response,
             user_id=test_user_id,
             email=test_email,
             expires_delta=expires_delta,

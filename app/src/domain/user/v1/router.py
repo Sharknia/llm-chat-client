@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.src.core.dependencies.auth import authenticate_refresh_token, registered_user
@@ -68,6 +68,7 @@ async def signup(
 )
 async def login(
     request: UserLoginRequest,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> LoginResponse:
     """
@@ -78,6 +79,7 @@ async def login(
     """
     user: LoginResponse = await login_user(
         db=db,
+        response=response,
         email=request.email,
         password=request.password,
     )
@@ -97,12 +99,17 @@ async def login(
 )
 async def logout(
     db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response,
     login_user: Annotated[AuthenticatedUser, Depends(registered_user)],
 ) -> LogoutResponse:
     """
     사용자 로그아웃
     """
-    await logout_user(db, login_user.user_id)
+    await logout_user(
+        db=db,
+        response=response,
+        user_id=login_user.user_id,
+    )
     return LogoutResponse()
 
 
@@ -122,15 +129,17 @@ async def logout(
 )
 async def refresh_token(
     db: Annotated[AsyncSession, Depends(get_db)],
-    login_user: Annotated[AuthenticatedUser, Depends(authenticate_refresh_token)],
+    response: Response,
+    refresh_user: Annotated[AuthenticatedUser, Depends(authenticate_refresh_token)],
 ) -> LoginResponse:
     """
     액세스 토큰 갱신
     """
     result = await refresh_access_token(
         db=db,
-        user_id=login_user.user_id,
-        email=login_user.email,
+        response=response,
+        user_id=refresh_user.user_id,
+        email=refresh_user.email,
     )
     return result
 
