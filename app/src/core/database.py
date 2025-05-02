@@ -11,7 +11,7 @@ ASYNC_DATABASE_URL = settings.DATABASE_URL.replace(
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
     echo=settings.DEBUG,
-    pool_pre_ping=False,
+    pool_pre_ping=True,
     pool_recycle=3600,
 )
 
