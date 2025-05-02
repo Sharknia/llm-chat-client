@@ -146,6 +146,7 @@ async def registered_user(
 # 쿠키에 담겨온 리프레시 토큰 검증
 async def authenticate_refresh_token(
     db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response,
     refresh_token: str = Cookie(None),
 ) -> AuthenticatedUser:
     """
@@ -172,9 +173,6 @@ async def authenticate_refresh_token(
                 raise AuthErrors.INVALID_TOKEN
         except ValueError as e:
             raise AuthErrors.INVALID_TOKEN from e
-
-        # 사용된 리프레시 토큰 삭제 및 쿠키 제거
-        await delete_refresh_token(db, user_id)
 
         # 인증된 사용자 정보 반환
         return AuthenticatedUser(
