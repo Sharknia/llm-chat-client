@@ -1,11 +1,12 @@
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import exists
 
 from app.src.domain.hotdeal.models import Keyword
-from app.src.domain.user.models import User
+from app.src.domain.user.models import User, user_keywords
 
 
 # 새로운 키워드 등록
@@ -59,3 +60,34 @@ async def add_my_keyword(
 
         user.keywords.append(keyword)
         await db.commit()
+
+
+# 내가 가지고 있는 키워드인지 조회
+async def is_my_keyword(
+    db: AsyncSession,
+    user_id: UUID,
+    keyword_id: int,
+) -> bool:
+    exists_query = select(
+        exists().where(
+            (user_keywords.c.user_id == user_id)
+            & (user_keywords.c.keyword_id == keyword_id)
+        )
+    )
+    result = await db.execute(exists_query)
+    return result.scalar()
+
+
+# 내 키워드 연결 끊기
+async def unlink_keyword(
+    db: AsyncSession,
+    user_id: UUID,
+    keyword_id: int,
+) -> None:
+    # user_keywords 테이블에서 직접 관계 삭제
+    delete_query = delete(user_keywords).where(
+        (user_keywords.c.user_id == user_id)
+        & (user_keywords.c.keyword_id == keyword_id)
+    )
+    await db.execute(delete_query)
+    await db.commit()
