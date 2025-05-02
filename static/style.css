@@ -631,19 +631,118 @@ button:hover {
     margin-top: 2rem;
 }
 
-.start-chat-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background-color: #007bff;
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background-color 0.3s;
-}
-
 .start-chat-button:hover {
     background-color: #0056b3;
+}
+
+/* 핫딜 페이지 스타일 */
+.hotdeal-page {
+    /* 기존 home-page 스타일과 유사하게 설정하거나 필요에 맞게 조정 */
+    min-height: 100vh;
+    background-color: var(--body-bg);
+}
+
+.hotdeal-content {
+    max-width: 800px; /* 홈보다 약간 좁게 */
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+.hotdeal-keyword-list-section,
+.add-hotdeal-section {
+    background-color: var(--container-bg);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 2px 4px var(--shadow-color);
+    margin-bottom: var(--spacing-xl);
+}
+
+.hotdeal-keyword-list-section h2,
+.add-hotdeal-section h2 {
+    font-size: var(--font-size-h2);
+    font-weight: 700;
+    color: var(--text-dark-color);
+    margin-top: 0;
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: var(--spacing-md);
+}
+
+.hotdeal-keyword-list-section h2 i,
+.add-hotdeal-section h2 i {
+    margin-right: var(--spacing-sm);
+}
+
+#hotdeal-keyword-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#hotdeal-keyword-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#hotdeal-keyword-list li:last-child {
+    border-bottom: none;
+}
+
+#hotdeal-keyword-list li span {
+    flex-grow: 1;
+    margin-right: var(--spacing-md);
+    color: var(--text-color);
+    font-size: var(--font-size-base);
+}
+
+.delete-button {
+    background-color: transparent;
+    color: #dc3545; /* 빨간색 계열 */
+    border: none;
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: color var(--transition-base), background-color var(--transition-base);
+    line-height: 1;
+}
+
+.delete-button i {
+    font-size: 1rem;
+}
+
+.delete-button:hover {
+    color: white;
+    background-color: #dc3545;
+}
+
+#add-hotdeal-keyword-form {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+#hotdeal-keyword-input {
+    flex-grow: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 1px solid var(--input-border-color);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    outline: none;
+    transition: border-color var(--transition-base);
+}
+
+#hotdeal-keyword-input:focus {
+    border-color: var(--primary-color);
+}
+
+#add-hotdeal-keyword-form button {
+    /* 기본 버튼 스타일 사용 */
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--border-radius-sm);
+}
+
+#add-hotdeal-keyword-form button i {
+    margin-right: var(--spacing-sm);
 }
