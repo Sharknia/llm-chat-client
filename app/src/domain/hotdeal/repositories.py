@@ -1,8 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import exists
 
 from app.src.domain.hotdeal.models import Keyword
@@ -47,19 +46,14 @@ async def add_my_keyword(
     user_id: UUID,
     keyword_id: int,
 ) -> None:
-    result = await db.execute(
-        select(User).options(selectinload(User.keywords)).filter(User.id == user_id)
-    )
-    user = result.scalar_one_or_none()
-    keyword = await db.get(Keyword, keyword_id)
+    # 해당 키워드가 사용자의 키워드인지 먼저 확인
+    is_already_added = await is_my_keyword(db, user_id, keyword_id)
+    if is_already_added:
+        raise ValueError("이미 등록된 키워드입니다.")
 
-    if user and keyword:
-        # 이미 등록된 키워드인지 확인
-        if keyword in user.keywords:
-            raise ValueError("이미 등록된 키워드입니다.")
-
-        user.keywords.append(keyword)
-        await db.commit()
+    insert_query = insert(user_keywords).values(user_id=user_id, keyword_id=keyword_id)
+    await db.execute(insert_query)
+    await db.commit()
 
 
 # 내가 가지고 있는 키워드인지 조회
