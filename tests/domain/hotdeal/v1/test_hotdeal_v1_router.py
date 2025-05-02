@@ -128,3 +128,28 @@ async def test_delete_my_keyword(
 
     if expected_response:
         assert response.json() == expected_response
+
+
+@pytest.mark.asyncio
+async def test_get_my_keywords_list(
+    mocker,
+    mock_client,
+    mock_authenticated_user,
+    override_registered_user,
+):
+    """내 키워드 리스트 조회 API 테스트"""
+    # 테스트용 인증 유저 오버라이드
+    override_registered_user(mock_authenticated_user)
+
+    mocker.patch(
+        "app.src.domain.hotdeal.v1.router.view_users_keywords",
+        return_value=[KeywordResponse(id=1, title="keyword")],
+    )
+    # API 호출
+    response: Response = mock_client.get("/api/hotdeal/v1/keywords")
+
+    # 응답 검증
+    assert response.status_code == 200
+    assert response.json() == [
+        {"id": 1, "title": "keyword"},
+    ]

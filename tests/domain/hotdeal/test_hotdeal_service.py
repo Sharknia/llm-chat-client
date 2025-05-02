@@ -7,7 +7,11 @@ from app.src.core.exceptions.base_exceptions import BaseHTTPException
 from app.src.core.exceptions.client_exceptions import ClientErrors
 from app.src.domain.hotdeal.repositories import is_my_keyword
 from app.src.domain.hotdeal.schemas import KeywordResponse
-from app.src.domain.hotdeal.services import register_keyword, unlink_keyword
+from app.src.domain.hotdeal.services import (
+    register_keyword,
+    unlink_keyword,
+    view_users_keywords,
+)
 from app.src.domain.hotdeal.utils import normalize_keyword
 
 
@@ -140,3 +144,30 @@ async def test_unlink_keyword(
         # 키워드 삭제 후 키워드 존재 여부 확인
         result = await is_my_keyword(mock_db_session, UUID(user_id), new_keyword.id)
         assert not result
+
+
+@pytest.mark.asyncio
+async def test_view_users_keywords(
+    add_mock_user,
+    mock_db_session: AsyncSession,
+):
+    """유저의 키워드 리스트 조회 서비스 테스트"""
+    await add_mock_user(
+        id=UUID("00000000-0000-0000-0000-00000000000a"),
+        is_active=True,
+        nickname="test_user",
+        password="validpassword",
+    )
+    # 키워드 등록
+    await register_keyword(
+        db=mock_db_session,
+        title="Keyword",
+        user_id=UUID("00000000-0000-0000-0000-00000000000a"),
+    )
+    # 키워드 리스트 조회
+    result: list[KeywordResponse] = await view_users_keywords(
+        db=mock_db_session,
+        user_id=UUID("00000000-0000-0000-0000-00000000000a"),
+    )
+    assert len(result) == 1
+    assert result[0].title == "keyword"

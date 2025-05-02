@@ -8,7 +8,11 @@ from app.src.core.dependencies.db_session import get_db
 from app.src.core.exceptions.auth_excptions import AuthErrors
 from app.src.core.exceptions.client_exceptions import ClientErrors
 from app.src.domain.hotdeal.schemas import KeywordCreateRequest, KeywordResponse
-from app.src.domain.hotdeal.services import register_keyword, unlink_keyword
+from app.src.domain.hotdeal.services import (
+    register_keyword,
+    unlink_keyword,
+    view_users_keywords,
+)
 from app.src.domain.user.schemas import (
     AuthenticatedUser,
 )
@@ -66,3 +70,23 @@ async def delete_my_keyword(
 
 
 # 내 키워드 리스토 보기
+@router.get(
+    "/keywords",
+    status_code=status.HTTP_200_OK,
+    summary="내 키워드 리스토 보기",
+    responses=create_responses(
+        AuthErrors.INVALID_TOKEN,
+        AuthErrors.INVALID_TOKEN_PAYLOAD,
+        AuthErrors.USER_NOT_ACTIVE,
+        AuthErrors.USER_NOT_FOUND,
+    ),
+)
+async def get_my_keywords_list(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    login_user: Annotated[AuthenticatedUser, Depends(registered_user)],
+) -> list[KeywordResponse]:
+    result: list[KeywordResponse] = await view_users_keywords(
+        db=db,
+        user_id=login_user.user_id,
+    )
+    return result

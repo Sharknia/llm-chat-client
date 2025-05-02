@@ -103,3 +103,17 @@ async def delete_keyword(
 ) -> None:
     delete_query = delete(Keyword).where(Keyword.id == keyword_id)
     await db.execute(delete_query)
+
+
+# 유저의 키워드 리스트 조회 (이름으로 정렬)
+async def select_users_keywords(
+    db: AsyncSession,
+    user_id: UUID,
+) -> list[Keyword]:
+    select_query = (
+        select(Keyword)
+        .where(Keyword.users.any(User.id == user_id))
+        .order_by(Keyword.title)
+    )
+    result = await db.execute(select_query)
+    return result.scalars().all()
