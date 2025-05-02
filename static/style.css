@@ -18,6 +18,9 @@
     --scrollbar-thumb-hover-color: #a1a1a1;
     --shadow-color: rgba(0, 0, 0, 0.1);
 
+    /* Icons */
+    --main-icon-url: url('https://ktlnpawucfuxjbufkplf.supabase.co/storage/v1/object/public/pb//tuum.png');
+
     /* Fonts */
     --font-family-base: 'Noto Sans KR', sans-serif;
     --font-size-base: 14px;
