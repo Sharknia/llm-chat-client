@@ -12,8 +12,15 @@ function renderKeywords(keywords) {
         const listItem = document.createElement('li');
         listItem.dataset.id = keyword.id; // data-id 속성 추가
         listItem.innerHTML = `
-            <span>${keyword.title}</span>
-            <button class="delete-button"><i class="fas fa-trash"></i></button>
+            <span class="keyword-title">${keyword.title}</span>
+            <div class="keyword-actions">
+                <a href="https://www.algumon.com/search/${encodeURIComponent(
+                    keyword.title
+                )}" target="_blank" class="search-link-button" title="알구몬에서 검색하기">
+                    전체 목록 보기
+                </a>
+                <button class="delete-button" title="키워드 삭제">삭제</button>
+            </div>
         `;
         keywordListElement.appendChild(listItem);
     });
