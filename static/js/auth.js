@@ -80,6 +80,7 @@ async function refreshTokenAndRetry(originalUrl, originalOptions) {
         // 중요: 토큰 갱신 요청은 fetchWithAuth를 사용하지 않음 (무한 루프 방지)
         const refreshResponse = await fetch(`${API_URL}/user/v1/token/refresh`, {
             method: 'POST',
+            credentials: 'include',
         });
 
         if (refreshResponse.ok) {
@@ -128,6 +129,7 @@ async function fetchWithAuth(url, options = {}) {
         ...options,
         headers: mergedHeaders,
         body: body,
+        credentials: 'include',
     };
 
     try {
