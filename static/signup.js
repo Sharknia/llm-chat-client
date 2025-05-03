@@ -1,5 +1,3 @@
-import { API_URL } from './js/config.js';
-
 async function handleSignup(event) {
     event.preventDefault();
 
