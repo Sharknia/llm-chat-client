@@ -131,12 +131,12 @@ async function fetchWithAuth(url, options = {}) {
     };
 
     try {
-        url = API_URL + url;
-        const response = await fetch(url, mergedOptions);
+        const full_url = API_URL + url;
+        const response = await fetch(full_url, mergedOptions);
 
         // 401 Unauthorized 에러 발생 시 토큰 갱신 및 재시도 로직
         if (response.status === 401) {
-            console.warn('[fetchWithAuth] 401 Unauthorized 감지. 토큰 갱신 및 재시도 시작... :' + url);
+            console.warn('[fetchWithAuth] 401 Unauthorized 감지. 토큰 갱신 및 재시도 시작... :' + full_url);
             // 재시도 함수의 결과를 반환 (성공 시 Response, 실패 시 null)
             const retryResponse = await refreshTokenAndRetry(url, mergedOptions);
             // 재시도 실패(null) 시 에러처럼 처리하거나, 호출 측에서 null을 처리하도록 함

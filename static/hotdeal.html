@@ -40,11 +40,11 @@
                     window.location.href = '/login';
                     return;
                 }
-                document.addEventListener('DOMContentLoaded', async () => {
+
+                async function startApp() {
                     const userInfo = await getUserInfo();
                     if (userInfo) {
-                        // 유저 정보 관련 UI 업데이트 (필요하다면)
-                        // 예: document.getElementById('user-nickname').textContent = userInfo.nickname;
+                        document.getElementById('user-nickname').textContent = userInfo.nickname;
                     }
 
                     // 키워드 목록 로드
@@ -71,7 +71,13 @@
                             }
                         }
                     });
-                });
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', startApp);
+                } else {
+                    await startApp();
+                }
             })();
         </script>
         <script>
