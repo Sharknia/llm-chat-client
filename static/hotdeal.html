@@ -14,7 +14,22 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </head>
     <body class="hotdeal-page">
-        <div id="header-placeholder"></div>
+        <nav class="main-nav">
+            <div class="nav-content">
+                <div class="nav-left">
+                    <img
+                        src="https://ktlnpawucfuxjbufkplf.supabase.co/storage/v1/object/public/pb//tuum.png"
+                        alt="tuum.day 로고"
+                        class="nav-logo"
+                    />
+                    <h1>tuum.day</h1>
+                </div>
+                <div class="nav-right">
+                    <span id="user-nickname"></span>
+                    <button id="logout-button" class="nav-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+                </div>
+            </div>
+        </nav>
 
         <main class="hotdeal-content">
             <section class="add-hotdeal-section">
@@ -42,11 +57,6 @@
                 }
 
                 async function startApp() {
-                    const userInfo = await getUserInfo();
-                    if (userInfo) {
-                        document.getElementById('user-nickname').textContent = userInfo.nickname;
-                    }
-
                     // 키워드 목록 로드
                     await loadKeywords();
 
@@ -71,6 +81,22 @@
                             }
                         }
                     });
+                    const userInfo = await getUserInfo();
+
+                    const logoutButton = document.getElementById('logout-button');
+                    if (logoutButton) {
+                        logoutButton.addEventListener('click', () => {
+                            if (confirm('정말로 로그아웃하시겠습니까?')) {
+                                logout();
+                            }
+                        });
+                    }
+
+                    if (userInfo) {
+                        if (document.getElementById('user-nickname')) {
+                            document.getElementById('user-nickname').textContent = userInfo.nickname;
+                        }
+                    }
                 }
 
                 if (document.readyState === 'loading') {
@@ -79,23 +105,6 @@
                     await startApp();
                 }
             })();
-        </script>
-        <script>
-            // 헤더 로드 스크립트는 유지
-            fetch('/header.html')
-                .then((response) => response.text())
-                .then((data) => {
-                    document.getElementById('header-placeholder').innerHTML = data;
-                    // 헤더 로드 후 필요한 작업 (예: 로그아웃 버튼 리스너)
-                    const logoutButton = document.getElementById('logout-button');
-                    if (logoutButton) {
-                        logoutButton.addEventListener('click', () => {
-                            // auth_utils.js 모듈을 동적으로 임포트하여 사용
-                            import('./js/auth_utils.js').then((module) => module.logout());
-                        });
-                    }
-                })
-                .catch((error) => console.error('Error loading header:', error));
         </script>
     </body>
 </html>
