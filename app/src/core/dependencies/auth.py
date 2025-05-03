@@ -29,11 +29,11 @@ async def create_access_token(
     email: str,
     nickname: str,
     auth_level: AuthLevel,
-    expires_delta: timedelta = timedelta(minutes=15),
 ) -> str:
     """
     Access Token 생성 함수
     """
+    expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "user_id": str(user_id),
         "email": email,

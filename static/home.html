@@ -34,9 +34,8 @@
             // 임시 리다이렉트
             window.location.href = '/hotdeal';
         </script>
-        <script type="module">
-            import { checkLoginStatus, getUserInfo, logout } from './js/auth_utils.js';
-
+        <script src="./js/auth.js?v=1.0.0"></script>
+        <script>
             (async () => {
                 const isLogin = await checkLoginStatus();
                 if (!isLogin) {
@@ -50,8 +49,6 @@
                     document.getElementById('user-nickname').textContent = userInfo.nickname;
                 }
             });
-        </script>
-        <script>
             fetch('/header.html')
                 .then((response) => response.text())
                 .then((data) => {

@@ -1,4 +1,21 @@
-import { API_URL } from './config.js';
+function getApiUrl() {
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        if (port === '8001') {
+            return 'http://localhost:8001/api';
+        } else if (port === '8000') {
+            return 'http://localhost:8000/api';
+        }
+    } else if (hostname.includes('dev.')) {
+        return 'https://dev-api.tuum.day/api';
+    } else {
+        return 'https://api.tuum.day/api';
+    }
+}
+
+const API_URL = getApiUrl();
 
 // 토큰 관리를 위한 키 상수
 const TOKEN_KEYS = {
@@ -7,13 +24,13 @@ const TOKEN_KEYS = {
 };
 
 // 토큰 저장
-export function saveTokens(accessToken, userId) {
+function saveTokens(accessToken, userId) {
     sessionStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
     sessionStorage.setItem(TOKEN_KEYS.USER_ID, userId);
 }
 
 // 토큰 가져오기
-export function getTokens() {
+function getTokens() {
     return {
         accessToken: sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN),
         userId: sessionStorage.getItem(TOKEN_KEYS.USER_ID),
@@ -21,18 +38,18 @@ export function getTokens() {
 }
 
 // 토큰 삭제 (로그아웃 시 사용)
-export function clearTokens() {
+function clearTokens() {
     sessionStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
     sessionStorage.removeItem(TOKEN_KEYS.USER_ID);
 }
 
 // 토큰 존재 여부 확인
-export function hasValidTokens() {
+function hasValidTokens() {
     return !!sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
 }
 
 // API 요청 시 사용할 인증 헤더 생성
-export function getAuthHeaders() {
+function getAuthHeaders() {
     const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
     return accessToken
         ? {
@@ -57,13 +74,10 @@ function forceLogout() {
  * @returns {Promise<Response|null>} 재시도 성공 시 Response, 실패 시 null
  */
 async function refreshTokenAndRetry(originalUrl, originalOptions) {
-    const { accessToken, userId } = getTokens();
-
     console.log('액세스 토큰 갱신 시도...');
 
     try {
         // 중요: 토큰 갱신 요청은 fetchWithAuth를 사용하지 않음 (무한 루프 방지)
-        // 또한, 이 요청의 Authorization 헤더에는 리프레시 토큰을 사용해야 함.
         const refreshResponse = await fetch(`${API_URL}/user/v1/token/refresh`, {
             method: 'POST',
         });
@@ -91,7 +105,7 @@ async function refreshTokenAndRetry(originalUrl, originalOptions) {
  * @param {RequestInit} options fetch 옵션 객체
  * @returns {Promise<Response>} fetch Promise
  */
-export async function fetchWithAuth(url, options = {}) {
+async function fetchWithAuth(url, options = {}) {
     const headers = getAuthHeaders();
 
     // 기존 옵션의 헤더와 병합
@@ -117,14 +131,14 @@ export async function fetchWithAuth(url, options = {}) {
     };
 
     try {
-        url = API_URL + url;
-        const response = await fetch(url, mergedOptions);
+        const full_url = API_URL + url;
+        const response = await fetch(full_url, mergedOptions);
 
         // 401 Unauthorized 에러 발생 시 토큰 갱신 및 재시도 로직
         if (response.status === 401) {
-            console.warn('401 Unauthorized 감지. 토큰 갱신 및 재시도 시작...');
+            console.warn('[fetchWithAuth] 401 Unauthorized 감지. 토큰 갱신 및 재시도 시작... :' + full_url);
             // 재시도 함수의 결과를 반환 (성공 시 Response, 실패 시 null)
-            const retryResponse = await refreshTokenAndRetry(url, options);
+            const retryResponse = await refreshTokenAndRetry(url, mergedOptions);
             // 재시도 실패(null) 시 에러처럼 처리하거나, 호출 측에서 null을 처리하도록 함
             if (retryResponse === null) {
                 // 이미 forceLogout이 호출되었으므로 여기서는 에러만 던져서 흐름 중단
@@ -140,5 +154,57 @@ export async function fetchWithAuth(url, options = {}) {
         console.error(`fetchWithAuth 실패 [${options.method || 'GET'} ${url}]:`, error);
         // 여기서 에러를 다시 던져서, 호출한 곳에서 처리하도록 함
         throw error;
+    }
+}
+
+/**
+ * 로그인 상태를 확인하는 함수
+ * @returns {Promise<boolean>} 로그인되어 있지 않으면 false, 로그인되어 있으면 true를 반환
+ */
+async function checkLoginStatus() {
+    try {
+        const response = await fetchWithAuth('/user/v1/me');
+        return response.ok;
+    } catch (error) {
+        console.error('인증 확인 실패:', error);
+        return false;
+    }
+}
+
+/**
+ * 사용자 정보를 가져오는 함수
+ * @returns {Promise<Object>} 사용자 정보 객체 또는 null
+ */
+async function getUserInfo() {
+    try {
+        const response = await fetchWithAuth('/user/v1/me');
+        if (!response.ok) {
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('사용자 정보 조회 실패:', error);
+        return null;
+    }
+}
+
+/**
+ * 로그아웃 처리 함수
+ * @returns {Promise<boolean>} 로그아웃 성공 여부
+ */
+async function logout() {
+    try {
+        const response = await fetchWithAuth('/user/v1/logout', {
+            method: 'POST',
+        });
+        if (response.ok) {
+            clearTokens();
+            window.location.href = '/login';
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('로그아웃 실패:', error);
+        return false;
     }
 }

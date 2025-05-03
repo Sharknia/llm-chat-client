@@ -1,5 +1,3 @@
-import { fetchWithAuth } from './auth.js';
-
 const keywordListElement = document.getElementById('hotdeal-keyword-list');
 const keywordInputElement = document.getElementById('hotdeal-keyword-input');
 
@@ -22,7 +20,7 @@ function renderKeywords(keywords) {
 }
 
 // 키워드 목록 로드 함수
-export async function loadKeywords() {
+async function loadKeywords() {
     try {
         const response = await fetchWithAuth('/hotdeal/v1/keywords');
         if (!response.ok) {
@@ -37,7 +35,7 @@ export async function loadKeywords() {
 }
 
 // 키워드 추가 함수
-export async function addKeyword(title) {
+async function addKeyword(title) {
     if (!title) {
         alert('키워드를 입력해주세요.');
         return;
@@ -86,7 +84,7 @@ export async function addKeyword(title) {
 }
 
 // 키워드 삭제 함수
-export async function deleteKeyword(keywordId) {
+async function deleteKeyword(keywordId) {
     if (!keywordId) {
         console.error('삭제할 키워드의 ID가 없습니다.');
         return;

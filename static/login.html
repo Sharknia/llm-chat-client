@@ -4,9 +4,9 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>로그인 - tuum.day</title>
-        <script type="module">
-            import { getTokens } from './js/auth.js';
-
+        <script src="./js/auth.js?v=1.0.0"></script>
+        <script src="./login.js?v=1.0.0"></script>
+        <script>
             async function init() {
                 const tokens = await getTokens();
                 if (tokens.accessToken) {
@@ -14,7 +14,7 @@
                 }
             }
 
-            init();
+            await init();
         </script>
         <link rel="stylesheet" href="./style.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -43,6 +43,5 @@
                 <div class="auth-link">계정이 없으신가요? <a href="/signup">회원가입</a></div>
             </div>
         </div>
-        <script src="./login.js?v=1" type="module"></script>
     </body>
 </html>

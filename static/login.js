@@ -1,6 +1,3 @@
-import { saveTokens } from './js/auth.js';
-import { API_URL } from './js/config.js';
-
 async function handleLogin(event) {
     event.preventDefault();
 

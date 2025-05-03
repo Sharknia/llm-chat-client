@@ -31,49 +31,54 @@
                 </ul>
             </section>
         </main>
-        <script type="module">
-            import { checkLoginStatus, getUserInfo, logout } from './js/auth_utils.js';
-            import { loadKeywords, addKeyword, deleteKeyword } from './js/keyword_manager.js'; // 키워드 관리 함수 임포트
-
+        <script src="./js/auth.js?v=1.0.0"></script>
+        <script src="./js/keyword_manager.js?v=1.0.0"></script>
+        <script>
             (async () => {
                 const isLogin = await checkLoginStatus();
                 if (!isLogin) {
                     window.location.href = '/login';
+                    return;
+                }
+
+                async function startApp() {
+                    const userInfo = await getUserInfo();
+                    if (userInfo) {
+                        document.getElementById('user-nickname').textContent = userInfo.nickname;
+                    }
+
+                    // 키워드 목록 로드
+                    await loadKeywords();
+
+                    // 키워드 추가 폼 이벤트 리스너
+                    const addForm = document.getElementById('add-hotdeal-keyword-form');
+                    addForm.addEventListener('submit', async (event) => {
+                        event.preventDefault();
+                        const input = document.getElementById('hotdeal-keyword-input');
+                        await addKeyword(input.value);
+                    });
+
+                    // 키워드 삭제 버튼 이벤트 리스너 (이벤트 위임 방식 사용)
+                    const keywordList = document.getElementById('hotdeal-keyword-list');
+                    keywordList.addEventListener('click', async (event) => {
+                        if (event.target.closest('.delete-button')) {
+                            const listItem = event.target.closest('li');
+                            const keywordId = listItem.dataset.id;
+                            if (keywordId) {
+                                await deleteKeyword(keywordId);
+                            } else {
+                                console.error('삭제할 키워드의 ID를 찾을 수 없습니다.');
+                            }
+                        }
+                    });
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', startApp);
+                } else {
+                    await startApp();
                 }
             })();
-
-            document.addEventListener('DOMContentLoaded', async () => {
-                const userInfo = await getUserInfo();
-                if (userInfo) {
-                    // 유저 정보 관련 UI 업데이트 (필요하다면)
-                    // 예: document.getElementById('user-nickname').textContent = userInfo.nickname;
-                }
-
-                // 키워드 목록 로드
-                await loadKeywords();
-
-                // 키워드 추가 폼 이벤트 리스너
-                const addForm = document.getElementById('add-hotdeal-keyword-form');
-                addForm.addEventListener('submit', async (event) => {
-                    event.preventDefault();
-                    const input = document.getElementById('hotdeal-keyword-input');
-                    await addKeyword(input.value);
-                });
-
-                // 키워드 삭제 버튼 이벤트 리스너 (이벤트 위임 방식 사용)
-                const keywordList = document.getElementById('hotdeal-keyword-list');
-                keywordList.addEventListener('click', async (event) => {
-                    if (event.target.closest('.delete-button')) {
-                        const listItem = event.target.closest('li');
-                        const keywordId = listItem.dataset.id;
-                        if (keywordId) {
-                            await deleteKeyword(keywordId);
-                        } else {
-                            console.error('삭제할 키워드의 ID를 찾을 수 없습니다.');
-                        }
-                    }
-                });
-            });
         </script>
         <script>
             // 헤더 로드 스크립트는 유지
