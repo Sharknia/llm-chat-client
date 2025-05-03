@@ -4,9 +4,9 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>회원가입 - tuum.day</title>
-        <script type="module">
-            import { getTokens } from './js/auth.js';
-
+        <script src="./js/auth.js?v=1.0.0"></script>
+        <script src="./signup.js?v=1.0.0"></script>
+        <script>
             async function init() {
                 const tokens = await getTokens();
                 if (tokens.accessToken) {
@@ -51,6 +51,5 @@
                 <div class="auth-link">이미 계정이 있으신가요? <a href="/login">로그인</a></div>
             </div>
         </div>
-        <script src="/signup.js?v=1" type="module"></script>
     </body>
 </html>
