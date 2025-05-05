@@ -65,14 +65,23 @@ async def create_refresh_token(
         payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm=ALGORITHM
     )
     await save_refresh_token(db, user_id, refresh_token)
+
+    # 환경에 따라 secure 및 domain 속성 결정
+    environment = getattr(settings, "ENVIRONMENT", "development")
+    is_secure_environment = environment == "production"
+    cookie_domain = None
+    if environment in ["dev", "prod"]:
+        cookie_domain = ".tuum.day"
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=is_secure_environment,
         samesite="lax",
         path="/",
         max_age=expires_delta.total_seconds(),
+        domain=cookie_domain,
     )
     return refresh_token
 
@@ -83,12 +92,21 @@ async def delete_refresh_token(
     user_id: UUID,
 ) -> None:
     await init_refresh_token(db, user_id)
+
+    # 환경에 따라 secure 및 domain 속성 결정 (쿠키 생성 시와 동일한 로직 사용)
+    environment = getattr(settings, "ENVIRONMENT", "development")
+    is_secure_environment = environment == "production"
+    cookie_domain = None
+    if environment in ["dev", "prod"]:
+        cookie_domain = ".tuum.day"
+
     response.delete_cookie(
         key="refresh_token",
-        path="/",  # 쿠키를 설정할 때와 동일한 path를 써야 합니다.
+        path="/",
         httponly=True,
-        secure=True,
+        secure=is_secure_environment,
         samesite="lax",
+        domain=cookie_domain,  # domain 속성 추가
     )
     return None
 
