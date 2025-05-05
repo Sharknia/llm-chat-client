@@ -66,19 +66,23 @@ async def create_refresh_token(
     )
     await save_refresh_token(db, user_id, refresh_token)
 
-    # 환경에 따라 secure 및 domain 속성 결정
+    # 환경에 따라 secure, domain, samesite 속성 결정
     environment = getattr(settings, "ENVIRONMENT", "development")
-    is_secure_environment = environment == "production"
     cookie_domain = None
+    is_secure = False
+    samesite = "lax"
+
     if environment in ["dev", "prod"]:
-        cookie_domain = ".tuum.day"
+        cookie_domain = ".tuum.day"  # 모든 tuum.day 서브도메인에서 공유
+        is_secure = True  # dev, prod 환경은 HTTPS 사용 가정
+        samesite = "None"  # 크로스 사이트 요청 허용
 
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=is_secure_environment,
-        samesite="lax",
+        secure=is_secure,
+        samesite=samesite,
         path="/",
         max_age=expires_delta.total_seconds(),
         domain=cookie_domain,
@@ -93,20 +97,24 @@ async def delete_refresh_token(
 ) -> None:
     await init_refresh_token(db, user_id)
 
-    # 환경에 따라 secure 및 domain 속성 결정 (쿠키 생성 시와 동일한 로직 사용)
+    # 환경에 따라 secure, domain, samesite 속성 결정 (쿠키 생성 시와 동일한 로직 사용)
     environment = getattr(settings, "ENVIRONMENT", "development")
-    is_secure_environment = environment == "production"
     cookie_domain = None
+    is_secure = False
+    samesite = "lax"
+
     if environment in ["dev", "prod"]:
         cookie_domain = ".tuum.day"
+        is_secure = True
+        samesite = "None"
 
     response.delete_cookie(
         key="refresh_token",
         path="/",
         httponly=True,
-        secure=is_secure_environment,
-        samesite="lax",
-        domain=cookie_domain,  # domain 속성 추가
+        secure=is_secure,
+        samesite=samesite,
+        domain=cookie_domain,
     )
     return None
 
