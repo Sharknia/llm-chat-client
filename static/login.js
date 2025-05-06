@@ -9,6 +9,7 @@ async function handleLogin(event) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                credentials: 'include',
             },
             body: JSON.stringify({
                 email,
