@@ -158,16 +158,20 @@ async def job():
     keywords_to_process: list[Keyword] = []
     all_users_with_keywords: list[User] = []  # 사용자 정보를 담을 리스트 추가
 
-    async with AsyncSessionLocal() as session:
-        # 사용자와 매핑된 키워드만 조회 (사용자 정보도 함께 로드 - joinedload 사용)
-        stmt = select(Keyword).where(Keyword.users.any())
-        result = await session.execute(stmt)
-        keywords_to_process = result.scalars().unique().all()
+    try:
+        async with AsyncSessionLocal() as session:
+            # 사용자와 매핑된 키워드만 조회
+            stmt = select(Keyword).where(Keyword.users.any())
+            result = await session.execute(stmt)
+            keywords_to_process = result.scalars().unique().all()
 
-        # 메일 발송을 위해 모든 사용자 정보 미리 로드 (키워드 정보 포함)
-        user_stmt = select(User).options(selectinload(User.keywords))
-        user_result = await session.execute(user_stmt)
-        all_users_with_keywords = user_result.scalars().unique().all()
+            # 메일 발송을 위해 모든 사용자 정보 미리 로드 (키워드 정보 포함)
+            user_stmt = select(User).options(selectinload(User.keywords))
+            user_result = await session.execute(user_stmt)
+            all_users_with_keywords = user_result.scalars().unique().all()
+    except Exception as e:
+        logger.error(f"DB 조회 중 오류 발생: {e}")
+        return  # DB 조회 실패 시 작업 중단
 
     if not keywords_to_process:
         print("[INFO] 처리할 활성 키워드가 없습니다.")
@@ -175,43 +179,77 @@ async def job():
 
     PROXY_MANAGER.reset_proxies()
     tasks = [handle_keyword(kw) for kw in keywords_to_process]
-    await asyncio.gather(*tasks)
+    # return_exceptions=True 로 설정하여 개별 작업 실패가 전체를 중단시키지 않도록 함
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # 개별 크롤링 작업 결과 확인 및 로깅
+    for i, res in enumerate(results):
+        if isinstance(res, Exception):
+            failed_keyword = keywords_to_process[i]
+            logger.error(f"키워드 '{failed_keyword.title}' 처리 중 오류 발생: {res}")
 
     print("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
 
     # 사용자별 메일 발송 로직
     for user in all_users_with_keywords:
-        user_deals: dict[Keyword, list[CrawledKeyword]] = {}
-        # 사용자가 구독한 Keyword 객체들을 set으로 만들어 빠른 조회를 지원
-        subscribed_keywords_set = set(user.keywords)
+        try:
+            user_deals: dict[Keyword, list[CrawledKeyword]] = {}
+            # 사용자가 구독한 Keyword 객체들을 set으로 만들어 빠른 조회를 지원
+            subscribed_keywords_set = set(user.keywords)
 
-        # 사용자가 구독한 키워드 중 크롤링된 결과가 있는지 확인
-        for crawled_keyword_obj, deals in id_to_crawled_keyword.items():
-            if crawled_keyword_obj in subscribed_keywords_set:
-                user_deals[crawled_keyword_obj] = deals
+            # 사용자가 구독한 키워드 중 크롤링된 결과가 있는지 확인
+            for crawled_keyword_obj, deals in id_to_crawled_keyword.items():
+                if crawled_keyword_obj in subscribed_keywords_set:
+                    user_deals[crawled_keyword_obj] = deals
 
-        if user_deals:
-            # 메일 내용 생성
-            email_content: str = ""
-            subject: str = ""
-            for keyword, deals in user_deals.items():
-                email_content += await make_hotdeal_email_content(keyword, deals)
-                subject += f"{keyword.title}, "
-            subject = subject[:-2]
-            subject = f"[{subject}] 새로운 핫딜 알림"
-            if settings.ENVIRONMENT == "prod":
-                await send_email(
-                    subject=subject,
-                    to=user.email,
-                    body=email_content,
-                    is_html=True,
-                )
-            else:
-                logger.info(
-                    f"[INFO] 사용자 {user.email} 에게 메일 발송 제목:{subject} 내용:{email_content}"
-                )
-        else:
-            print(f"[INFO] 사용자 {user.email} 에게 발송할 새 핫딜 없음")
+            if user_deals:
+                # 메일 내용 생성
+                email_content: str = ""
+                subject: str = ""
+                for keyword, deals in user_deals.items():
+                    try:
+                        email_content += await make_hotdeal_email_content(
+                            keyword, deals
+                        )
+                        subject += f"{keyword.title}, "
+                    except Exception as e:
+                        logger.error(
+                            f"사용자 {user.email}, 키워드 {keyword.title} 메일 내용 생성 중 오류: {e}"
+                        )
+                        # 내용 생성 실패 시 해당 키워드는 건너뛰고 계속 진행
+                        continue
+
+                if not email_content:
+                    # 모든 키워드에서 내용 생성 실패 시 메일 발송 안함
+                    print(
+                        f"[INFO] 사용자 {user.email} 에게 발송할 유효한 메일 내용 없음"
+                    )
+                    continue
+
+                subject = subject.rstrip(", ")  # 마지막 쉼표 및 공백 제거
+                subject = f"[{subject}] 새로운 핫딜 알림"
+
+                if settings.ENVIRONMENT == "prod":
+                    await send_email(
+                        subject=subject,
+                        to=user.email,
+                        body=email_content,
+                        is_html=True,
+                    )
+                    # 메일 발송 성공 로그 (선택적)
+                    # logger.info(f"사용자 {user.email} 에게 메일 발송 완료.")
+                else:
+                    logger.info(
+                        f"[DEV] 사용자 {user.email} 에게 메일 발송 제목:{subject} 내용:{email_content}"
+                    )
+            # else:
+            # 발송할 딜 없는 경우 로그는 위에서 처리했으므로 주석처리 또는 제거
+            # print(f"[INFO] 사용자 {user.email} 에게 발송할 새 핫딜 없음")
+        except Exception as e:
+            # 사용자별 메일 처리 루프 전체에서 예외 발생 시 로깅
+            logger.error(f"사용자 {user.email} 메일 처리 중 오류 발생: {e}")
+            # 다음 사용자로 계속 진행
+            continue
 
     # 다음 스케줄링을 위해 크롤링 결과 초기화
     id_to_crawled_keyword.clear()
@@ -243,4 +281,5 @@ if __name__ == "__main__":
     if settings.ENVIRONMENT == "prod":
         main()
     else:
-        asyncio.run(job())
+        # asyncio.run(job())
+        main()
