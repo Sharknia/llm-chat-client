@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import selectinload
 
 from app.src.core.config import settings
+from app.src.core.logger import logger
 from app.src.domain.hotdeal.enums import SiteName
 from app.src.domain.hotdeal.models import Keyword, KeywordSite
 from app.src.domain.hotdeal.schemas import CrawledKeyword
@@ -26,11 +27,14 @@ from app.src.Infrastructure.mail.mail_manager import (
 # User 모델을 사용하므로 _unused 튜플에서 제거하거나 주석 처리합니다.
 _unused = (user_keywords, MailLog)
 
-ASYNC_DATABASE_URL = (
-    settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-    .replace("db", "localhost", 1)
-    .replace("5432", "5433")
+ASYNC_DATABASE_URL = settings.DATABASE_URL.replace(
+    "postgresql://", "postgresql+asyncpg://", 1
 )
+if settings.ENVIRONMENT != "prod":
+    ASYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("db", "localhost", 1).replace(
+        "5432", "5433"
+    )
+print(ASYNC_DATABASE_URL)
 
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
@@ -123,22 +127,27 @@ async def get_new_hotdeal_keywords(
             return []
         # 첫번째 프로덕트인데, 기존 크롤링 결과가 있고 아이디가 다른 경우는 첫번째 프로덕트 박제 (추후 업데이트)
         elif is_first_product and result and result.external_id != product.id:
-            first_product = product
+            first_product = KeywordSite(
+                keyword_id=keyword.id,
+                site_name=SiteName.ALGUMON,
+                external_id=product.id,
+                link=product.link,
+                price=product.price,
+                meta_data=product.meta_data,
+            )
 
         # 첫번째 프로덕트가 아니라면, 지금 프로덕트의 아이디와 기존 저장된 프로덕트 아이디가 같다면 return
         elif not is_first_product and result and result.external_id == product.id:
-            # first_product update
-            result.external_id = product.id
-            result.link = product.link
-            result.price = product.price
-            result.meta_data = product.meta_data
+            result.external_id = first_product.external_id
+            result.link = first_product.link
+            result.price = first_product.price
+            result.meta_data = first_product.meta_data
             result.wdate = datetime.now()
             await session.commit()
             return return_result
 
         return_result.append(product)
         is_first_product = False
-    return result
 
 
 async def job():
@@ -193,12 +202,17 @@ async def job():
                 subject += f"{keyword.title}, "
             subject = subject[:-2]
             subject = f"[{subject}] 새로운 핫딜 알림"
-            await send_email(
-                subject=subject,
-                to=user.email,
-                body=email_content,
-                is_html=True,
-            )
+            if settings.ENVIRONMENT == "prod":
+                await send_email(
+                    subject=subject,
+                    to=user.email,
+                    body=email_content,
+                    is_html=True,
+                )
+            else:
+                logger.info(
+                    f"[INFO] 사용자 {user.email} 에게 메일 발송 제목:{subject} 내용:{email_content}"
+                )
         else:
             print(f"[INFO] 사용자 {user.email} 에게 발송할 새 핫딜 없음")
 
@@ -229,5 +243,7 @@ def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(job())
-    # main()
+    if settings.ENVIRONMENT == "prod":
+        main()
+    else:
+        asyncio.run(job())
