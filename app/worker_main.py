@@ -154,7 +154,7 @@ async def job():
     """
     사용자와 연결된 키워드만 불러와 병렬로 처리하고, 결과를 취합하여 메일을 발송합니다.
     """
-    PROXY_MANAGER.fetch_proxies()
+
     keywords_to_process: list[Keyword] = []
     all_users_with_keywords: list[User] = []  # 사용자 정보를 담을 리스트 추가
 
@@ -178,9 +178,26 @@ async def job():
         return
 
     PROXY_MANAGER.reset_proxies()
-    tasks = [handle_keyword(kw) for kw in keywords_to_process]
-    # return_exceptions=True 로 설정하여 개별 작업 실패가 전체를 중단시키지 않도록 함
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    PROXY_MANAGER.fetch_proxies()
+
+    results = []
+    CRAWLING_DELAY_SECONDS = 7  # 5~10초 사이의 값으로 설정 (예: 7초)
+
+    for i, kw in enumerate(keywords_to_process):
+        try:
+            await handle_keyword(kw)
+            results.append(
+                None
+            )  # 성공 시 (또는 handle_keyword가 값을 반환한다면 해당 값)
+        except Exception as e:
+            results.append(e)  # 실패 시 예외 객체 저장
+
+        # 마지막 키워드가 아니라면 지연 추가
+        if i < len(keywords_to_process) - 1:
+            print(
+                f"[INFO] 다음 키워드 '{keywords_to_process[i + 1].title if i + 1 < len(keywords_to_process) else ''}' 처리를 위해 {CRAWLING_DELAY_SECONDS}초 대기..."
+            )
+            await asyncio.sleep(CRAWLING_DELAY_SECONDS)
 
     # 개별 크롤링 작업 결과 확인 및 로깅
     for i, res in enumerate(results):
