@@ -45,3 +45,6 @@ docker-clean:
 
 makemigrations:
 	@docker compose exec web alembic revision --autogenerate -m "$(M)"
+
+start-hotdeal-worker shw:
+	PYTHONPATH=. poetry run python ./app/worker_main.py

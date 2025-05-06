@@ -16,11 +16,11 @@ class ProxyManager:
         return cls._instance
 
     def __init__(self, proxy_url="https://www.sslproxies.org/"):
-        if self._initialized:  # 이미 초기화된 경우 무시
+        if ProxyManager._initialized:
             return
         self.proxy_url = proxy_url
         self.proxies = []
-        self._initialized = True
+        ProxyManager._initialized = True
 
     def fetch_proxies(self):
         """무료 프록시를 수집하여 저장."""
