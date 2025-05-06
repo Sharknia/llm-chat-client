@@ -7,6 +7,7 @@ async function handleLogin(event) {
     try {
         const response = await fetch(`${API_URL}/user/v1/login`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
