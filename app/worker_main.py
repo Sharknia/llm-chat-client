@@ -5,6 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import Result, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import selectinload
 
 from app.src.core.config import settings
 from app.src.domain.hotdeal.enums import SiteName
@@ -17,8 +18,13 @@ from app.src.domain.user.models import User, user_keywords
 from app.src.Infrastructure.crawling.base_crawler import BaseCrawler
 from app.src.Infrastructure.crawling.crawlers.algumon import AlgumonCrawler
 from app.src.Infrastructure.crawling.proxy_manager import ProxyManager
+from app.src.Infrastructure.mail.mail_manager import (
+    make_hotdeal_email_content,
+    send_email,
+)
 
-_unused = (User, user_keywords, MailLog)
+# User 모델을 사용하므로 _unused 튜플에서 제거하거나 주석 처리합니다.
+_unused = (user_keywords, MailLog)
 
 ASYNC_DATABASE_URL = (
     settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
@@ -44,28 +50,32 @@ AsyncSessionLocal = async_sessionmaker(
 
 PROXY_MANAGER = ProxyManager()
 
-# keyword_id - CrawledKeyword의 딕셔너리
-id_to_crawled_keyword: dict[int, CrawledKeyword] = {}
+# keyword - CrawledKeyword 리스트의 딕셔너리
+id_to_crawled_keyword: dict[Keyword, list[CrawledKeyword]] = {}
 
 
 async def handle_keyword(
     keyword: Keyword,
-    session: AsyncSession,
-) -> list[CrawledKeyword]:
+) -> None:
     """
-    단일 키워드를 크롤링하고 크롤링 결과를 갱신
+    단일 키워드를 크롤링하고 크롤링 결과를 id_to_crawled_keyword에 직접 저장
     """
     print(f"[INFO] 키워드 처리: {keyword.title}")
 
-    crwaled_data: list[CrawledKeyword] = await get_new_hotdeal_keywords(
-        session=session,
-        keyword=keyword,
-    )
+    # 함수 내부에서 세션 생성
+    async with AsyncSessionLocal() as session:
+        crawled_data: list[CrawledKeyword] = await get_new_hotdeal_keywords(
+            session=session,
+            keyword=keyword,
+        )
 
-    if crwaled_data:
-        id_to_crawled_keyword[keyword.id] = crwaled_data
-    else:
-        print(f"[INFO] 키워드 처리: {keyword.title} 크롤링 결과 없음")
+        if crawled_data:
+            id_to_crawled_keyword[keyword] = crawled_data
+            print(
+                f"[INFO] 키워드 처리: {keyword.title} 신규 핫딜 {len(crawled_data)}건 발견"
+            )
+        else:
+            print(f"[INFO] 키워드 처리: {keyword.title} 크롤링 결과 없음")
 
 
 async def get_new_hotdeal_keywords(
@@ -133,18 +143,68 @@ async def get_new_hotdeal_keywords(
 
 async def job():
     """
-    사용자와 연결된 키워드만 불러와 병렬로 처리합니다.
+    사용자와 연결된 키워드만 불러와 병렬로 처리하고, 결과를 취합하여 메일을 발송합니다.
     """
     PROXY_MANAGER.fetch_proxies()
+    keywords_to_process: list[Keyword] = []
+    all_users_with_keywords: list[User] = []  # 사용자 정보를 담을 리스트 추가
+
     async with AsyncSessionLocal() as session:
-        # 사용자와 매핑된 키워드만 조회
+        # 사용자와 매핑된 키워드만 조회 (사용자 정보도 함께 로드 - joinedload 사용)
         stmt = select(Keyword).where(Keyword.users.any())
         result = await session.execute(stmt)
-        keywords = result.scalars().all()
+        keywords_to_process = result.scalars().unique().all()
 
-    tasks = [handle_keyword(kw, session) for kw in keywords]
+        # 메일 발송을 위해 모든 사용자 정보 미리 로드 (키워드 정보 포함)
+        user_stmt = select(User).options(selectinload(User.keywords))
+        user_result = await session.execute(user_stmt)
+        all_users_with_keywords = user_result.scalars().unique().all()
+
+    if not keywords_to_process:
+        print("[INFO] 처리할 활성 키워드가 없습니다.")
+        return
+
     PROXY_MANAGER.reset_proxies()
+    tasks = [handle_keyword(kw) for kw in keywords_to_process]
     await asyncio.gather(*tasks)
+
+    print("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
+
+    # 사용자별 메일 발송 로직
+    for user in all_users_with_keywords:
+        user_deals: dict[Keyword, list[CrawledKeyword]] = {}
+        # 사용자가 구독한 Keyword 객체들을 set으로 만들어 빠른 조회를 지원
+        subscribed_keywords_set = set(user.keywords)
+
+        # 사용자가 구독한 키워드 중 크롤링된 결과가 있는지 확인
+        for crawled_keyword_obj, deals in id_to_crawled_keyword.items():
+            if crawled_keyword_obj in subscribed_keywords_set:
+                user_deals[crawled_keyword_obj] = deals
+
+        if user_deals:
+            print(
+                f"[INFO] 사용자 {user.email} 에게 메일 발송 대상 핫딜 {len(user_deals)}건 발견"
+            )
+            # 메일 내용 생성
+            email_content: str = ""
+            subject: str = ""
+            for keyword, deals in user_deals.items():
+                email_content += await make_hotdeal_email_content(keyword, deals)
+                subject += f"{keyword.title}, "
+            subject = subject[:-2]
+            subject = f"[{subject}] 새로운 핫딜 알림"
+            await send_email(
+                subject=subject,
+                to=user.email,
+                body=email_content,
+                is_html=True,
+            )
+        else:
+            print(f"[INFO] 사용자 {user.email} 에게 발송할 새 핫딜 없음")
+
+    # 다음 스케줄링을 위해 크롤링 결과 초기화
+    id_to_crawled_keyword.clear()
+    print("[INFO] 메일 발송 완료 및 크롤링 결과 초기화")
 
 
 def main():
