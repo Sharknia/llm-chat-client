@@ -26,6 +26,9 @@ class Keyword(Base):
 
     users = relationship("User", secondary="user_keywords", back_populates="keywords")
     mail_logs = relationship("MailLog", back_populates="keyword")
+    sites = relationship(
+        "KeywordSite", back_populates="keyword", cascade="all, delete-orphan"
+    )
 
 
 class KeywordSite(Base):
@@ -42,3 +45,5 @@ class KeywordSite(Base):
     price = Column(String, nullable=True)
     meta_data = Column(Text, nullable=True)
     wdate = Column(DateTime, default=lambda: datetime.now(), nullable=False)
+
+    keyword = relationship("Keyword", back_populates="sites")
