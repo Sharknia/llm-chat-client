@@ -30,6 +30,9 @@ class Keyword(Base):
 
 class KeywordSite(Base):
     __tablename__ = "hotdeal_keyword_sites"
+    __table_args__ = (
+        UniqueConstraint("keyword_id", "site_name", name="uq_keyword_site"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     keyword_id = Column(Integer, ForeignKey("hotdeal_keywords.id"), nullable=False)
