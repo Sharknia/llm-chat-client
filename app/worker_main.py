@@ -191,9 +191,6 @@ async def job():
                 user_deals[crawled_keyword_obj] = deals
 
         if user_deals:
-            print(
-                f"[INFO] 사용자 {user.email} 에게 메일 발송 대상 핫딜 {len(user_deals)}건 발견"
-            )
             # 메일 내용 생성
             email_content: str = ""
             subject: str = ""
