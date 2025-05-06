@@ -8,11 +8,14 @@ Create Date: 2025-05-13 10:00:00.000000
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from psycopg2 import errors
+from sqlalchemy.exc import ProgrammingError
 
 from alembic import op
 
 # Enum을 사용하기 위해 모델 파일에서 가져올 수 있도록 경로를 맞춰주세요.
 # 실제 프로젝트 구조에 따라 이 부분은 수정이 필요할 수 있습니다.
+# from app.src.domain.hotdeal.enums import SiteName # 이 파일에서는 직접 사용하지 않으므로 주석처리 또는 삭제 가능
 
 
 # revision identifiers, used by Alembic.
@@ -41,7 +44,20 @@ def upgrade() -> None:
 
     # 기존 UniqueConstraint 제거 (models.py에서 __table_args__ 제거에 해당)
     # UniqueConstraint의 이름이 'uq_keyword_site' 였으므로 이를 사용
-    op.drop_constraint("uq_keyword_site", "hotdeal_keyword_sites", type_="unique")
+    try:
+        op.drop_constraint("uq_keyword_site", "hotdeal_keyword_sites", type_="unique")
+    except ProgrammingError as e:
+        # psycopg2.errors.UndefinedObject 에러 코드는 '42704' (Undefined Object)
+        # 또는 e.orig 가 psycopg2.errors.UndefinedObject 인스턴스인지 확인
+        if (
+            hasattr(e.orig, "pgcode")
+            and e.orig.pgcode == "42704"
+            or isinstance(e.orig, errors.UndefinedObject)
+        ):
+            print("INFO: Constraint 'uq_keyword_site' does not exist, skipping drop.")
+        else:
+            # 다른 ProgrammingError는 다시 발생시킴
+            raise
     # ### end Alembic commands ###
 
 
@@ -59,7 +75,7 @@ def downgrade() -> None:
     )
     op.create_primary_key("hotdeal_keyword_sites_pkey", "hotdeal_keyword_sites", ["id"])
 
-    # UniqueConstraint 다시 추가
+    # UniqueConstraint 다시 추가 (이 부분은 주석 해제)
     op.create_unique_constraint(
         "uq_keyword_site", "hotdeal_keyword_sites", ["keyword_id", "site_name"]
     )
