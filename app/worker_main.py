@@ -257,21 +257,26 @@ async def job():
 
 
 def main():
-    scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
+    loop = asyncio.get_event_loop()  # 이벤트 루프를 가져오거나 생성합니다.
+    scheduler = AsyncIOScheduler(
+        timezone="Asia/Seoul", event_loop=loop
+    )  # 스케줄러에 루프를 전달합니다.
 
-    # 매 시 0분, 30분에 job() 실행
+    trigger = CronTrigger(minute="0,30")
+    if settings.ENVIRONMENT != "prod":
+        trigger = CronTrigger(minute="*")
     scheduler.add_job(
-        lambda: asyncio.create_task(job()),
-        trigger=CronTrigger(minute="0,30"),
+        job,
+        trigger=trigger,
         id="hotdeal_worker",
         replace_existing=True,
     )
 
     scheduler.start()
-    print("[INFO] Worker 스케줄러 시작: 매 시 정각 및 30분마다 크롤링 및 메일 발송")
+    print("[INFO] Worker 스케줄러 시작: 매시 정각 및 30분마다 크롤링 및 메일 발송")
 
     try:
-        asyncio.get_event_loop().run_forever()
+        loop.run_forever()
     except (KeyboardInterrupt, SystemExit):
         print("[INFO] Worker 종료 중...")
         scheduler.shutdown()
@@ -281,5 +286,4 @@ if __name__ == "__main__":
     if settings.ENVIRONMENT == "prod":
         main()
     else:
-        # asyncio.run(job())
-        main()
+        asyncio.run(job())
