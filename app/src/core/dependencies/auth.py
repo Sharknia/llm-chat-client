@@ -67,15 +67,15 @@ async def create_refresh_token(
     await save_refresh_token(db, user_id, refresh_token)
 
     # 환경에 따라 secure, domain, samesite 속성 결정
-    environment = getattr(settings, "ENVIRONMENT", "development")
+    environment = settings.ENVIRONMENT
     cookie_domain = None
     is_secure = False
     samesite = "lax"
 
-    if environment in ["dev", "prod"]:
-        cookie_domain = ".tuum.day"  # 모든 tuum.day 서브도메인에서 공유
-        is_secure = True  # dev, prod 환경은 HTTPS 사용 가정
-        samesite = "None"  # 크로스 사이트 요청 허용
+    if environment != "local":
+        cookie_domain = ".tuum.day"
+        is_secure = True
+        samesite = "none"
 
     response.set_cookie(
         key="refresh_token",
