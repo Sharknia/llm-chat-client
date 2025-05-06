@@ -33,13 +33,13 @@ class Keyword(Base):
 
 class KeywordSite(Base):
     __tablename__ = "hotdeal_keyword_sites"
-    __table_args__ = (
-        UniqueConstraint("keyword_id", "site_name", name="uq_keyword_site"),
-    )
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    keyword_id = Column(Integer, ForeignKey("hotdeal_keywords.id"), nullable=False)
-    site_name = Column(Enum(SiteName), nullable=False, default=SiteName.ALGUMON)
+    keyword_id = Column(
+        Integer, ForeignKey("hotdeal_keywords.id"), primary_key=True, nullable=False
+    )
+    site_name = Column(
+        Enum(SiteName), primary_key=True, nullable=False, default=SiteName.ALGUMON
+    )
     external_id = Column(String, nullable=False)
     link = Column(String, nullable=True)
     price = Column(String, nullable=True)
