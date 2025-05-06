@@ -8,8 +8,6 @@ Create Date: 2025-05-13 10:00:00.000000
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from psycopg2 import errors
-from sqlalchemy.exc import ProgrammingError
 
 from alembic import op
 
@@ -42,22 +40,21 @@ def upgrade() -> None:
         ["keyword_id", "site_name"],
     )
 
-    # 기존 UniqueConstraint 제거 (models.py에서 __table_args__ 제거에 해당)
-    # UniqueConstraint의 이름이 'uq_keyword_site' 였으므로 이를 사용
-    try:
+    # 기존 UniqueConstraint('uq_keyword_site')가 존재하면 삭제
+    bind = op.get_bind()
+    result = bind.execute(
+        sa.text(
+            "SELECT 1 FROM pg_constraint "
+            "WHERE conname = 'uq_keyword_site' "
+            "AND conrelid = (SELECT oid FROM pg_class WHERE relname = 'hotdeal_keyword_sites' AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()))"
+        )
+    ).scalar_one_or_none()
+
+    if result == 1:
         op.drop_constraint("uq_keyword_site", "hotdeal_keyword_sites", type_="unique")
-    except ProgrammingError as e:
-        # psycopg2.errors.UndefinedObject 에러 코드는 '42704' (Undefined Object)
-        # 또는 e.orig 가 psycopg2.errors.UndefinedObject 인스턴스인지 확인
-        if (
-            hasattr(e.orig, "pgcode")
-            and e.orig.pgcode == "42704"
-            or isinstance(e.orig, errors.UndefinedObject)
-        ):
-            print("INFO: Constraint 'uq_keyword_site' does not exist, skipping drop.")
-        else:
-            # 다른 ProgrammingError는 다시 발생시킴
-            raise
+        print("INFO: Constraint 'uq_keyword_site' found and dropped.")
+    else:
+        print("INFO: Constraint 'uq_keyword_site' does not exist, skipping drop.")
     # ### end Alembic commands ###
 
 
