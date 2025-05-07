@@ -34,7 +34,6 @@ if settings.ENVIRONMENT != "prod":
     ASYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("db", "localhost", 1).replace(
         "5432", "5433"
     )
-print(ASYNC_DATABASE_URL)
 
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
@@ -64,7 +63,7 @@ async def handle_keyword(
     """
     단일 키워드를 크롤링하고 크롤링 결과를 id_to_crawled_keyword에 직접 저장
     """
-    print(f"[INFO] 키워드 처리: {keyword.title}")
+    logger.info(f"[INFO] 키워드 처리: {keyword.title}")
 
     # 함수 내부에서 세션 생성
     async with AsyncSessionLocal() as session:
@@ -75,11 +74,11 @@ async def handle_keyword(
 
         if crawled_data:
             id_to_crawled_keyword[keyword] = crawled_data
-            print(
+            logger.info(
                 f"[INFO] 키워드 처리: {keyword.title} 신규 핫딜 {len(crawled_data)}건 발견"
             )
         else:
-            print(f"[INFO] 키워드 처리: {keyword.title} 크롤링 결과 없음")
+            logger.info(f"[INFO] 키워드 처리: {keyword.title} 크롤링 결과 없음")
 
 
 async def get_new_hotdeal_keywords(
@@ -174,7 +173,7 @@ async def job():
         return  # DB 조회 실패 시 작업 중단
 
     if not keywords_to_process:
-        print("[INFO] 처리할 활성 키워드가 없습니다.")
+        logger.info("[INFO] 처리할 활성 키워드가 없습니다.")
         return
 
     PROXY_MANAGER.reset_proxies()
@@ -194,7 +193,7 @@ async def job():
 
         # 마지막 키워드가 아니라면 지연 추가
         if i < len(keywords_to_process) - 1:
-            print(
+            logger.info(
                 f"[INFO] 다음 키워드 '{keywords_to_process[i + 1].title if i + 1 < len(keywords_to_process) else ''}' 처리를 위해 {CRAWLING_DELAY_SECONDS}초 대기..."
             )
             await asyncio.sleep(CRAWLING_DELAY_SECONDS)
@@ -205,7 +204,7 @@ async def job():
             failed_keyword = keywords_to_process[i]
             logger.error(f"키워드 '{failed_keyword.title}' 처리 중 오류 발생: {res}")
 
-    print("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
+    logger.info("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
 
     # 사용자별 메일 발송 로직
     for user in all_users_with_keywords:
@@ -238,7 +237,7 @@ async def job():
 
                 if not email_content:
                     # 모든 키워드에서 내용 생성 실패 시 메일 발송 안함
-                    print(
+                    logger.info(
                         f"[INFO] 사용자 {user.email} 에게 발송할 유효한 메일 내용 없음"
                     )
                     continue
@@ -270,7 +269,7 @@ async def job():
 
     # 다음 스케줄링을 위해 크롤링 결과 초기화
     id_to_crawled_keyword.clear()
-    print("[INFO] 메일 발송 완료 및 크롤링 결과 초기화")
+    logger.info("[INFO] 메일 발송 완료 및 크롤링 결과 초기화")
 
 
 def main():
@@ -290,12 +289,14 @@ def main():
     )
 
     scheduler.start()
-    print("[INFO] Worker 스케줄러 시작: 매시 정각 및 30분마다 크롤링 및 메일 발송")
+    logger.info(
+        "[INFO] Worker 스케줄러 시작: 매시 정각 및 30분마다 크롤링 및 메일 발송"
+    )
 
     try:
         loop.run_forever()
     except (KeyboardInterrupt, SystemExit):
-        print("[INFO] Worker 종료 중...")
+        logger.info("[INFO] Worker 종료 중...")
         scheduler.shutdown()
 
 

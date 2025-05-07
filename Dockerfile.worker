@@ -13,6 +13,10 @@ ENV PATH="/root/.local/bin:$PATH"
 # 작업 디렉터리를 /app으로 설정합니다.
 WORKDIR /app
 
+# PYTHONPATH 환경 변수 설정
+# WORKDIR가 /app이므로, /app 디렉토리를 Python 모듈 검색 경로에 추가합니다.
+ENV PYTHONPATH=/app
+
 # pyproject.toml 및 poetry.lock 파일을 먼저 복사하여 의존성 설치 캐싱을 활용합니다.
 COPY pyproject.toml poetry.lock* /app/
 
@@ -32,9 +36,6 @@ RUN chmod +x /app/entrypoint.sh
 
 # 기본 작업 디렉토리 설정
 WORKDIR /app
-
-# Entrypoint 설정
-ENTRYPOINT ["/app/entrypoint.sh"]
 
 # 워커 실행 명령어
 CMD ["python", "app/worker_main.py"] 
