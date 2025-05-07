@@ -1,42 +1,12 @@
-version: '3.8'
-
 services:
-    db:
-        image: postgres:15
-        container_name: llm_chat_db
-        environment:
-            # .env 파일 값 참조 (healthcheck 등에서 사용)
-            POSTGRES_USER: ${POSTGRES_USER}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-            POSTGRES_DB: ${POSTGRES_DB}
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        ports:
-            - '5433:5432' # 호스트 포트 변경
-        restart: unless-stopped
-        healthcheck:
-            # .env 파일 값 참조 ($$ 사용)
-            test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
-            interval: 5s
-            timeout: 5s
-            retries: 5
-
     web:
         build: .
         container_name: llm_chat_web
         command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-        # .env 파일의 모든 변수를 컨테이너 환경 변수로 로드
-        # environment 섹션은 제거
         env_file:
             - .env
         volumes:
             - .:/app
         ports:
-            - '8001:8000' # 호스트 포트 변경
-        depends_on:
-            db:
-                condition: service_healthy
+            - '8001:8000'
         restart: unless-stopped
-
-volumes:
-    postgres_data:
