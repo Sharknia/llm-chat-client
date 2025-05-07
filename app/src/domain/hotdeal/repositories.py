@@ -103,6 +103,7 @@ async def delete_keyword(
 ) -> None:
     delete_query = delete(Keyword).where(Keyword.id == keyword_id)
     await db.execute(delete_query)
+    await db.commit()
 
 
 # 유저의 키워드 리스트 조회 (이름으로 정렬)
