@@ -7,7 +7,7 @@ on:
 
 jobs:
     deploy:
-        name: 🚀 Deploy main server
+        name: �� Deploy main server and worker
         runs-on: ubuntu-latest
 
         steps:
@@ -26,5 +26,12 @@ jobs:
                       set -e
                       cd ~/prod/llm-chat-client
                       git pull origin main
+                      echo "Building main application..."
                       make docker-build
+                      echo "Running main application..."
                       make docker-run
+                      echo "Building worker..."
+                      make docker-build-worker
+                      echo "Running worker..."
+                      make docker-run-worker
+                      echo "Deployment complete."
