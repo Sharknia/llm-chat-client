@@ -1,4 +1,5 @@
 import asyncio
+import random
 from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -63,6 +64,10 @@ async def handle_keyword(
     """
     단일 키워드를 크롤링하고 크롤링 결과를 id_to_crawled_keyword에 직접 저장
     """
+    # 각 작업 사이에 랜덤한 지연을 주어 서버 부하를 분산
+    delay = random.uniform(1, 5)
+    await asyncio.sleep(delay)
+
     logger.info(f"[INFO] 키워드 처리: {keyword.title}")
 
     # 함수 내부에서 세션 생성
@@ -91,7 +96,7 @@ async def get_new_hotdeal_keywords(
     # 해당 키워드에 대해 크롤링
     algumon_crawler: BaseCrawler = AlgumonCrawler(keyword=keyword.title)
 
-    products: list[CrawledKeyword] = algumon_crawler.fetchparse()
+    products: list[CrawledKeyword] = await algumon_crawler.fetchparse()
 
     # 기존 크롤링 결과 조회
     stmt = select(KeywordSite).where(
@@ -179,24 +184,9 @@ async def job():
     PROXY_MANAGER.reset_proxies()
     PROXY_MANAGER.fetch_proxies()
 
-    results = []
-    CRAWLING_DELAY_SECONDS = 7  # 5~10초 사이의 값으로 설정 (예: 7초)
-
-    for i, kw in enumerate(keywords_to_process):
-        try:
-            await handle_keyword(kw)
-            results.append(
-                None
-            )  # 성공 시 (또는 handle_keyword가 값을 반환한다면 해당 값)
-        except Exception as e:
-            results.append(e)  # 실패 시 예외 객체 저장
-
-        # 마지막 키워드가 아니라면 지연 추가
-        if i < len(keywords_to_process) - 1:
-            logger.info(
-                f"[INFO] 다음 키워드 '{keywords_to_process[i + 1].title if i + 1 < len(keywords_to_process) else ''}' 처리를 위해 {CRAWLING_DELAY_SECONDS}초 대기..."
-            )
-            await asyncio.sleep(CRAWLING_DELAY_SECONDS)
+    # --- 비동기 작업 병렬 처리로 수정 ---
+    tasks = [handle_keyword(kw) for kw in keywords_to_process]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # 개별 크롤링 작업 결과 확인 및 로깅
     for i, res in enumerate(results):
