@@ -54,15 +54,12 @@ AsyncSessionLocal = async_sessionmaker(
 
 PROXY_MANAGER = ProxyManager()
 
-# keyword - CrawledKeyword 리스트의 딕셔너리
-id_to_crawled_keyword: dict[Keyword, list[CrawledKeyword]] = {}
-
 
 async def handle_keyword(
     keyword: Keyword,
-) -> None:
+) -> tuple[Keyword, list[CrawledKeyword]] | None:
     """
-    단일 키워드를 크롤링하고 크롤링 결과를 id_to_crawled_keyword에 직접 저장
+    단일 키워드를 크롤링하고, 신규 핫딜이 있는 경우 결과를 반환합니다.
     """
     # 각 작업 사이에 랜덤한 지연을 주어 서버 부하를 분산
     delay = random.uniform(1, 5)
@@ -70,20 +67,20 @@ async def handle_keyword(
 
     logger.info(f"[INFO] 키워드 처리: {keyword.title}")
 
-    # 함수 내부에서 세션 생성
     async with AsyncSessionLocal() as session:
         crawled_data: list[CrawledKeyword] = await get_new_hotdeal_keywords(
             session=session,
             keyword=keyword,
         )
 
-        if crawled_data:
-            id_to_crawled_keyword[keyword] = crawled_data
-            logger.info(
-                f"[INFO] 키워드 처리: {keyword.title} 신규 핫딜 {len(crawled_data)}건 발견"
-            )
-        else:
-            logger.info(f"[INFO] 키워드 처리: {keyword.title} 크롤링 결과 없음")
+    if crawled_data:
+        logger.info(
+            f"[INFO] 키워드 처리: {keyword.title} 신규 핫딜 {len(crawled_data)}건 발견"
+        )
+        return keyword, crawled_data
+    else:
+        logger.info(f"[INFO] 키워드 처리: {keyword.title} 크롤링 결과 없음")
+        return None
 
 
 async def get_new_hotdeal_keywords(
@@ -92,66 +89,70 @@ async def get_new_hotdeal_keywords(
 ) -> list[CrawledKeyword]:
     """
     새로운 핫딜 키워드를 조회합니다.
+    1. 해당 키워드로 크롤링을 수행하여 최신 핫딜 목록을 가져옵니다.
+    2. DB에서 이전에 저장된 KeywordSite 정보를 조회하여 마지막으로 확인한 핫딜을 찾습니다.
+    3. 최신 핫딜 목록과 마지막 확인 핫딜을 비교하여 새로운 핫딜만 필터링합니다.
+    4. 새로운 핫딜이 있는 경우, KeywordSite 정보를 최신 핫딜로 업데이트하고 새로운 핫딜 목록을 반환합니다.
+    5. 새로운 핫딜이 없는 경우, 빈 목록을 반환합니다.
     """
-    # 해당 키워드에 대해 크롤링
+    # 1. 크롤링으로 최신 핫딜 목록 가져오기
     algumon_crawler: BaseCrawler = AlgumonCrawler(keyword=keyword.title)
+    latest_products: list[CrawledKeyword] = await algumon_crawler.fetchparse()
 
-    products: list[CrawledKeyword] = await algumon_crawler.fetchparse()
+    if not latest_products:
+        return []
 
-    # 기존 크롤링 결과 조회
+    # 2. DB에서 이전에 저장된 KeywordSite 정보 조회
     stmt = select(KeywordSite).where(
         KeywordSite.site_name == SiteName.ALGUMON,
         KeywordSite.keyword_id == keyword.id,
     )
-    result: Result[KeywordSite] = await session.execute(stmt)
-    # 유니크 키이므로 단 하나만 조회됨
-    result: KeywordSite | None = result.scalars().one_or_none()
+    result: Result = await session.execute(stmt)
+    last_crawled_site: KeywordSite | None = result.scalars().one_or_none()
 
-    is_first_product: bool = True
-    first_product: KeywordSite | None = None
+    # 3. 새로운 핫딜 필터링
+    new_deals: list[CrawledKeyword] = []
+    if not last_crawled_site:
+        # 첫 크롤링인 경우, 모든 제품이 새로운 핫딜
+        new_deals = latest_products
+    else:
+        # 마지막으로 크롤링된 핫딜의 인덱스를 찾음
+        try:
+            last_crawled_index = [p.id for p in latest_products].index(
+                last_crawled_site.external_id
+            )
+            new_deals = latest_products[:last_crawled_index]
+        except ValueError:
+            # 마지막으로 크롤링된 핫딜이 목록에 없으면 전부 새로운 핫딜로 간주
+            new_deals = latest_products
 
-    return_result: list[CrawledKeyword] = []
-
-    for product in products:
-        # 첫번째 프로덕트인데, 기존 크롤링 결과가 없는 경우
-        if is_first_product and not result:
-            first_product = KeywordSite(
+    # 4. 새로운 핫딜이 있으면 DB 업데이트 및 반환
+    if new_deals:
+        newest_product = new_deals[0]
+        if last_crawled_site:
+            # 기존 정보 업데이트
+            last_crawled_site.external_id = newest_product.id
+            last_crawled_site.link = newest_product.link
+            last_crawled_site.price = newest_product.price
+            last_crawled_site.meta_data = newest_product.meta_data
+            last_crawled_site.wdate = datetime.now()
+        else:
+            # 첫 크롤링 정보 저장
+            new_site_entry = KeywordSite(
                 keyword_id=keyword.id,
                 site_name=SiteName.ALGUMON,
-                external_id=product.id,
-                link=product.link,
-                price=product.price,
-                meta_data=product.meta_data,
+                external_id=newest_product.id,
+                link=newest_product.link,
+                price=newest_product.price,
+                meta_data=newest_product.meta_data,
             )
-            session.add(first_product)
-            await session.commit()
-            return [product]
-        # 첫번째 프로덕트인데, 기존 크롤링 결과가 있는데 이번것과 아이디가 같은 경우는 그냥 빈 리스트 리턴 (새 핫딜 없음)
-        elif is_first_product and result and result.external_id == product.id:
-            return []
-        # 첫번째 프로덕트인데, 기존 크롤링 결과가 있고 아이디가 다른 경우는 첫번째 프로덕트 박제 (추후 업데이트)
-        elif is_first_product and result and result.external_id != product.id:
-            first_product = KeywordSite(
-                keyword_id=keyword.id,
-                site_name=SiteName.ALGUMON,
-                external_id=product.id,
-                link=product.link,
-                price=product.price,
-                meta_data=product.meta_data,
-            )
+            session.add(new_site_entry)
 
-        # 첫번째 프로덕트가 아니라면, 지금 프로덕트의 아이디와 기존 저장된 프로덕트 아이디가 같다면 return
-        elif not is_first_product and result and result.external_id == product.id:
-            result.external_id = first_product.external_id
-            result.link = first_product.link
-            result.price = first_product.price
-            result.meta_data = first_product.meta_data
-            result.wdate = datetime.now()
-            await session.commit()
-            return return_result
+        await session.commit()
+        return new_deals
 
-        return_result.append(product)
-        is_first_product = False
+    # 5. 새로운 핫딜이 없으면 빈 목록 반환
+    return []
 
 
 async def job():
@@ -186,13 +187,19 @@ async def job():
 
     # --- 비동기 작업 병렬 처리로 수정 ---
     tasks = [handle_keyword(kw) for kw in keywords_to_process]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    # The result will be a list of `(Keyword, list[CrawledKeyword])` or `None`
+    task_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    # 개별 크롤링 작업 결과 확인 및 로깅
-    for i, res in enumerate(results):
+    id_to_crawled_keyword: dict[Keyword, list[CrawledKeyword]] = {}
+
+    # Process results and build the dictionary
+    for i, res in enumerate(task_results):
         if isinstance(res, Exception):
             failed_keyword = keywords_to_process[i]
             logger.error(f"키워드 '{failed_keyword.title}' 처리 중 오류 발생: {res}")
+        elif res:  # If res is not None
+            keyword, deals = res
+            id_to_crawled_keyword[keyword] = deals
 
     logger.info("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
 
@@ -257,34 +264,32 @@ async def job():
             # 다음 사용자로 계속 진행
             continue
 
-    # 다음 스케줄링을 위해 크롤링 결과 초기화
-    id_to_crawled_keyword.clear()
+    # 작업이 완료되면 지역 변수인 id_to_crawled_keyword는 자동으로 사라집니다.
     logger.info("[INFO] 메일 발송 완료 및 크롤링 결과 초기화")
 
 
-def main():
-    loop = asyncio.get_event_loop()  # 이벤트 루프를 가져오거나 생성합니다.
-    scheduler = AsyncIOScheduler(
-        timezone="Asia/Seoul", event_loop=loop
-    )  # 스케줄러에 루프를 전달합니다.
+async def main():
+    scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
 
     trigger = CronTrigger(minute="0,30")
     if settings.ENVIRONMENT != "prod":
         trigger = CronTrigger(minute="*")
+
     scheduler.add_job(
         job,
         trigger=trigger,
         id="hotdeal_worker",
         replace_existing=True,
     )
-
     scheduler.start()
     logger.info(
         "[INFO] Worker 스케줄러 시작: 매시 정각 및 30분마다 크롤링 및 메일 발송"
     )
 
     try:
-        loop.run_forever()
+        # 스케줄러가 백그라운드에서 실행되는 동안 메인 코루틴을 유지합니다.
+        while True:
+            await asyncio.sleep(3600)
     except (KeyboardInterrupt, SystemExit):
         logger.info("[INFO] Worker 종료 중...")
         scheduler.shutdown()
@@ -292,6 +297,6 @@ def main():
 
 if __name__ == "__main__":
     if settings.ENVIRONMENT == "prod":
-        main()
+        asyncio.run(main())
     else:
         asyncio.run(job())
