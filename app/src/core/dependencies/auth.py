@@ -126,20 +126,12 @@ async def delete_refresh_token(
     return None
 
 
-async def registered_user(
-    authorization: str = Header(None),
-) -> AuthenticatedUser:
-    """
-    사용자 가입 의존성 함수 : 단순 가입만 확인
-    """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise AuthErrors.INVALID_TOKEN
+# ---- Internal Helper Functions for Authentication ----
 
-    # 토큰 추출
-    token = authorization.split(" ")[1]
 
+async def _get_authenticated_user_from_token(token: str) -> AuthenticatedUser:
+    """Helper to decode and validate the access token payload."""
     try:
-        # 토큰 검증 및 디코딩
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id_str: str = payload.get("user_id")
         email: str = payload.get("email")
@@ -154,12 +146,10 @@ async def registered_user(
         ):
             raise AuthErrors.INVALID_TOKEN_PAYLOAD
 
-        # user_id 형식 검증 추가
         try:
-            # UUID 변환 시도 (실제 사용은 안하지만 형식 검증용)
-            uuid_user_id = UUID(user_id_str)
+            # Validate UUID format
+            UUID(user_id_str)
         except ValueError as e:
-            # UUID 변환 실패 시 잘못된 페이로드
             raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
 
         try:
@@ -167,18 +157,48 @@ async def registered_user(
         except ValueError as e:
             raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
 
-        # AuthenticatedUser 생성 시에는 문자열 user_id 전달
         return AuthenticatedUser(
             user_id=user_id_str, email=email, nickname=nickname, auth_level=auth_level
         )
-
+    except ExpiredSignatureError as e:
+        raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
     except JWTError as e:
         raise AuthErrors.INVALID_TOKEN from e
 
 
+async def _validate_user_status_and_level(
+    db: DBSession, user: AuthenticatedUser, required_level: AuthLevel
+):
+    """Helper to check if a user is active and has the required auth level."""
+    user_uuid = user.user_id
+
+    is_active_user = await check_user_active(db, user_uuid)
+    if not is_active_user:
+        raise AuthErrors.USER_NOT_ACTIVE
+
+    if user.auth_level.value < required_level.value:
+        raise AuthErrors.INSUFFICIENT_PERMISSIONS
+
+
+# ---- Public Authentication Dependencies ----
+
+
+async def registered_user(
+    authorization: str = Header(None),
+) -> AuthenticatedUser:
+    """
+    사용자 가입 의존성 함수 : 단순 가입만 확인 (DB 조회 없음)
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise AuthErrors.INVALID_TOKEN
+
+    token = authorization.split(" ")[1]
+    return await _get_authenticated_user_from_token(token)
+
+
 # 쿠키에 담겨온 리프레시 토큰 검증
 async def authenticate_refresh_token(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: DBSession,
     response: Response,
     refresh_token: str = Cookie(None),
 ) -> AuthenticatedUser:
@@ -231,53 +251,12 @@ async def authenticate_user(
     if not authorization or not authorization.startswith("Bearer "):
         raise AuthErrors.NOT_AUTHENTICATED
 
-    # 토큰 추출
     token = authorization.split(" ")[1]
 
-    try:
-        # 토큰 검증 및 디코딩
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-        user_id_str: str = payload.get("user_id")
-        email: str = payload.get("email")
-        nickname: str = payload.get("nickname")
-        auth_level_value: int = payload.get("auth_level")
+    authenticated_user = await _get_authenticated_user_from_token(token)
+    await _validate_user_status_and_level(db, authenticated_user, AuthLevel.USER)
 
-        if (
-            user_id_str is None
-            or email is None
-            or nickname is None
-            or auth_level_value is None
-        ):
-            raise AuthErrors.INVALID_TOKEN_PAYLOAD
-
-        try:
-            auth_level = AuthLevel(auth_level_value)
-        except ValueError as e:
-            raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
-
-        # 사용자 활성 상태 확인 (UUID로 변환하여 전달)
-        try:
-            user_uuid = UUID(user_id_str)  # 문자열을 UUID로 변환
-        except ValueError as e:
-            # UUID 변환 실패 시 잘못된 토큰으로 간주
-            raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
-
-        is_active_user = await check_user_active(db, user_uuid)  # UUID 객체 전달
-        if not is_active_user:
-            raise AuthErrors.USER_NOT_ACTIVE
-
-        # --- 권한 레벨 확인 추가 (USER 이상) ---
-        if auth_level.value < AuthLevel.USER.value:
-            raise AuthErrors.INSUFFICIENT_PERMISSIONS
-
-        # AuthenticatedUser 생성 시에는 문자열 user_id 전달 (Pydantic이 UUID로 변환)
-        return AuthenticatedUser(
-            user_id=user_id_str, email=email, nickname=nickname, auth_level=auth_level
-        )
-    except ExpiredSignatureError as e:
-        raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
-    except JWTError as e:
-        raise AuthErrors.INVALID_TOKEN from e
+    return authenticated_user
 
 
 # ---- 관리자 인증 함수 추가 ----
@@ -293,48 +272,10 @@ async def authenticate_admin_user(
 
     token = authorization.split(" ")[1]
 
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-        user_id_str: str = payload.get("user_id")
-        email: str = payload.get("email")
-        nickname: str = payload.get("nickname")
-        auth_level_value: int = payload.get("auth_level")
+    authenticated_user = await _get_authenticated_user_from_token(token)
+    await _validate_user_status_and_level(db, authenticated_user, AuthLevel.ADMIN)
 
-        if (
-            user_id_str is None
-            or email is None
-            or nickname is None
-            or auth_level_value is None
-        ):
-            raise AuthErrors.INVALID_TOKEN_PAYLOAD
-
-        try:
-            auth_level = AuthLevel(auth_level_value)
-        except ValueError as e:
-            raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
-
-        # 사용자 활성 상태 확인 (UUID로 변환하여 전달)
-        try:
-            user_uuid = UUID(user_id_str)  # 문자열을 UUID로 변환
-        except ValueError as e:
-            raise AuthErrors.INVALID_TOKEN_PAYLOAD from e
-
-        is_active_user = await check_user_active(db, user_uuid)  # UUID 객체 전달
-        if not is_active_user:
-            raise AuthErrors.USER_NOT_ACTIVE
-
-        # --- 권한 레벨 확인 추가 (ADMIN 이상) ---
-        if auth_level.value < AuthLevel.ADMIN.value:
-            raise AuthErrors.INSUFFICIENT_PERMISSIONS
-
-        # AuthenticatedUser 생성 시에는 문자열 user_id 전달
-        return AuthenticatedUser(
-            user_id=user_id_str, email=email, nickname=nickname, auth_level=auth_level
-        )
-    except ExpiredSignatureError as e:
-        raise AuthErrors.ACCESS_TOKEN_EXPIRED from e
-    except JWTError as e:
-        raise AuthErrors.INVALID_TOKEN from e
+    return authenticated_user
 
 
 async def create_password_reset_token(
