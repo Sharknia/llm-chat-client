@@ -29,17 +29,24 @@ async def create_access_token(
     email: str,
     nickname: str,
     auth_level: AuthLevel,
+    expires_delta: timedelta | None = None,  # 만료 시간 인자 추가
 ) -> str:
     """
     Access Token 생성 함수
     """
-    expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    if expires_delta:
+        expire = datetime.now(UTC) + expires_delta
+    else:
+        expire = datetime.now(UTC) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+
     payload = {
         "user_id": str(user_id),
         "email": email,
         "nickname": nickname,
         "auth_level": auth_level,
-        "exp": datetime.now(UTC) + expires_delta,
+        "exp": expire,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
 
