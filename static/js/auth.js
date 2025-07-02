@@ -24,33 +24,52 @@ const TOKEN_KEYS = {
 };
 
 // 토큰 저장
-function saveTokens(accessToken, userId) {
-    sessionStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
-    sessionStorage.setItem(TOKEN_KEYS.USER_ID, userId);
+function saveTokens(accessToken, userId, rememberMe = false) {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    // 다른 스토리지에 있는 토큰은 삭제하여 충돌을 방지합니다.
+    const otherStorage = rememberMe ? sessionStorage : localStorage;
+    otherStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
+    otherStorage.removeItem(TOKEN_KEYS.USER_ID);
+
+    storage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
+    storage.setItem(TOKEN_KEYS.USER_ID, userId);
 }
 
 // 토큰 가져오기
 function getTokens() {
+    // localStorage에 토큰이 있으면 우선적으로 사용합니다.
+    let accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+    let userId = localStorage.getItem(TOKEN_KEYS.USER_ID);
+
+    // localStorage에 토큰이 없으면 sessionStorage에서 찾습니다.
+    if (!accessToken) {
+        accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+        userId = sessionStorage.getItem(TOKEN_KEYS.USER_ID);
+    }
+
     return {
-        accessToken: sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN),
-        userId: sessionStorage.getItem(TOKEN_KEYS.USER_ID),
+        accessToken: accessToken,
+        userId: userId,
     };
 }
 
 // 토큰 삭제 (로그아웃 시 사용)
 function clearTokens() {
+    // 두 스토리지 모두에서 토큰을 삭제합니다.
+    localStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(TOKEN_KEYS.USER_ID);
     sessionStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
     sessionStorage.removeItem(TOKEN_KEYS.USER_ID);
 }
 
 // 토큰 존재 여부 확인
 function hasValidTokens() {
-    return !!sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+    return !!(localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN) || sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN));
 }
 
 // API 요청 시 사용할 인증 헤더 생성
 function getAuthHeaders() {
-    const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+    const { accessToken } = getTokens();
     return accessToken
         ? {
               Authorization: `Bearer ${accessToken}`,
@@ -67,6 +86,9 @@ function forceLogout() {
     window.location.href = '/login';
 }
 
+// 토큰 갱신 중복 실행을 방지하기 위한 변수
+let isRefreshing = false;
+let refreshSubscribers = [];
 /**
  * 토큰을 갱신하고 원래 요청을 재시도하는 함수
  * @param {string} originalUrl 재시도할 원래 URL
@@ -74,6 +96,19 @@ function forceLogout() {
  * @returns {Promise<Response|null>} 재시도 성공 시 Response, 실패 시 null
  */
 async function refreshTokenAndRetry(originalUrl, originalOptions) {
+    // 이미 다른 요청에 의해 토큰 갱신이 진행 중인 경우
+    if (isRefreshing) {
+        // 갱신이 완료될 때까지 기다렸다가 원래 요청을 재시도하는 Promise를 반환
+        return new Promise((resolve) => {
+            // 갱신 후 실행할 콜백을 배열에 추가
+            refreshSubscribers.push(() => {
+                console.log('대기 후 원래 요청 재시도:', originalUrl);
+                resolve(fetchWithAuth(originalUrl, originalOptions));
+            });
+        });
+    }
+
+    isRefreshing = true;
     console.log('액세스 토큰 갱신 시도...');
 
     try {
@@ -83,20 +118,30 @@ async function refreshTokenAndRetry(originalUrl, originalOptions) {
             credentials: 'include',
         });
 
-        if (refreshResponse.ok) {
-            const data = await refreshResponse.json();
-            saveTokens(data.access_token, data.user_id);
-            console.log('토큰 갱신 성공. 원래 요청 재시도:', originalUrl);
-            return fetchWithAuth(originalUrl, originalOptions);
-        } else {
+        if (!refreshResponse.ok) {
             console.error('토큰 갱신 실패:', refreshResponse.status, await refreshResponse.text());
             forceLogout();
             return null;
         }
+
+        const data = await refreshResponse.json();
+        // '로그인 상태 유지' 여부를 알 수 없으므로, localStorage에 토큰이 있었다면 true로 간주
+        const rememberMe = !!localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+        saveTokens(data.access_token, data.user_id, rememberMe);
+        console.log('토큰 갱신 성공. 대기 중인 요청 처리...');
+
+        // 대기 중이던 모든 요청들을 실행
+        refreshSubscribers.forEach((callback) => callback());
+        refreshSubscribers = []; // 배열 비우기
+
+        console.log('첫 요청 재시도:', originalUrl);
+        return fetchWithAuth(originalUrl, originalOptions); // 원래의 첫 요청 재시도
     } catch (error) {
         console.error('토큰 갱신 중 네트워크 오류 또는 기타 문제 발생:', error);
         forceLogout();
         return null;
+    } finally {
+        isRefreshing = false;
     }
 }
 
