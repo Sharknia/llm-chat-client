@@ -3,6 +3,7 @@ async function handleLogin(event) {
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const rememberMe = document.getElementById('remember-me')?.checked || false;
 
     try {
         const response = await fetch(`${API_URL}/user/v1/login`, {
@@ -24,7 +25,7 @@ async function handleLogin(event) {
         const data = await response.json();
 
         // 토큰 저장
-        saveTokens(data.access_token, data.user_id);
+        saveTokens(data.access_token, data.user_id, rememberMe);
         // 홈 페이지로 이동
         window.location.href = '/home';
     } catch (error) {
