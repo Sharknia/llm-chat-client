@@ -14,6 +14,7 @@ import app.src.domain.user.models
 from app.src.core.config import settings
 from app.src.core.exceptions.base_exceptions import BaseHTTPException
 from app.src.core.logger import logger
+from app.src.domain.admin.v1 import router as admin_router
 from app.src.domain.hotdeal.v1 import router as hotdeal_router
 from app.src.domain.user.v1 import router as user_router
 
@@ -87,6 +88,7 @@ app.openapi = custom_openapi
 
 app.include_router(user_router.router, prefix="/api/user")
 app.include_router(hotdeal_router.router, prefix="/api/hotdeal")
+app.include_router(admin_router.router, prefix="/api")
 
 
 @app.exception_handler(BaseHTTPException)
