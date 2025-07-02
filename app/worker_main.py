@@ -96,7 +96,7 @@ async def get_new_hotdeal_keywords(
     # 해당 키워드에 대해 크롤링
     algumon_crawler: BaseCrawler = AlgumonCrawler(keyword=keyword.title)
 
-    products: list[CrawledKeyword] = algumon_crawler.fetchparse()
+    products: list[CrawledKeyword] = await algumon_crawler.fetchparse()
 
     # 기존 크롤링 결과 조회
     stmt = select(KeywordSite).where(
