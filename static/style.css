@@ -421,6 +421,29 @@ button:hover {
     border-color: var(--primary-color);
 }
 
+.input-group-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-xl);
+    text-align: left;
+}
+
+.input-group-inline input[type='checkbox'] {
+    /* 최신 브라우저에서 체크박스 색상을 테마에 맞게 변경합니다. */
+    accent-color: var(--primary-color);
+    width: 16px;
+    height: 16px;
+    margin: 0 var(--spacing-sm) 0 0;
+    cursor: pointer;
+}
+
+.input-group-inline label {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--text-dark-color);
+    cursor: pointer;
+}
 .auth-button {
     /* Renamed from login/signup-button */
     width: 100%;
