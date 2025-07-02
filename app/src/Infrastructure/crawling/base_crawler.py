@@ -52,7 +52,7 @@ class BaseCrawler(ABC):
                     logger.warning(
                         f"{response.status_code}: 접근이 차단되었습니다. 프록시로 재시도합니다."
                     )
-                    return await self._fetch_with_proxy(client, target_url, timeout)
+                    return await self._fetch_with_proxy(target_url, timeout)
 
                 response.raise_for_status()
                 logger.info(f"요청 성공: {target_url}")
@@ -64,7 +64,6 @@ class BaseCrawler(ABC):
 
     async def _fetch_with_proxy(
         self,
-        client: httpx.AsyncClient,
         url: str,
         timeout: int = 100,
     ) -> str | None:
@@ -72,16 +71,19 @@ class BaseCrawler(ABC):
         for proxy in self.proxy_manager.proxies:
             try:
                 proxies = {"http://": proxy, "https://": proxy}
-                response = await client.get(url, proxies=proxies, timeout=timeout)
+                async with httpx.AsyncClient(proxies=proxies) as proxy_client:
+                    response = await proxy_client.get(url, timeout=timeout)
 
-                if response.status_code in [403, 430]:
-                    logger.warning(f"프록시 {proxy}에서 {response.status_code} 발생")
-                    continue
-                elif response.status_code == 200:
-                    logger.info(f"프록시 {proxy}로 요청 성공")
-                    return response.text
-            except httpx.RequestError:
-                logger.warning(f"프록시 {proxy}로 요청 실패")
+                    if response.status_code in [403, 430]:
+                        logger.warning(
+                            f"프록시 {proxy}에서 {response.status_code} 발생"
+                        )
+                        continue
+                    elif response.status_code == 200:
+                        logger.info(f"프록시 {proxy}로 요청 성공")
+                        return response.text
+            except httpx.RequestError as e:
+                logger.warning(f"프록시 {proxy}로 요청 실패: {e}")
         logger.error("모든 프록시를 사용했지만 요청에 실패했습니다.")
         return None
 
