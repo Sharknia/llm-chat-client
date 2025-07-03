@@ -185,21 +185,20 @@ async def job():
     PROXY_MANAGER.reset_proxies()
     PROXY_MANAGER.fetch_proxies()
 
-    # --- 비동기 작업 병렬 처리로 수정 ---
-    tasks = [handle_keyword(kw) for kw in keywords_to_process]
-    # The result will be a list of `(Keyword, list[CrawledKeyword])` or `None`
-    task_results = await asyncio.gather(*tasks, return_exceptions=True)
-
     id_to_crawled_keyword: dict[Keyword, list[CrawledKeyword]] = {}
 
-    # Process results and build the dictionary
-    for i, res in enumerate(task_results):
-        if isinstance(res, Exception):
-            failed_keyword = keywords_to_process[i]
-            logger.error(f"키워드 '{failed_keyword.title}' 처리 중 오류 발생: {res}")
-        elif res:  # If res is not None
-            keyword, deals = res
-            id_to_crawled_keyword[keyword] = deals
+    for kw in keywords_to_process:
+        try:
+            res = await handle_keyword(kw)
+            if res:
+                keyword, deals = res
+                id_to_crawled_keyword[keyword] = deals
+        except Exception as e:
+            logger.error(f"키워드 '{kw.title}' 처리 중 오류 발생: {e}")
+        finally:
+            # 각 키워드 처리 후 랜덤한 지연을 추가하여 서버 부하를 줄임
+            delay = random.uniform(1, 3)
+            await asyncio.sleep(delay)
 
     logger.info("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
 
