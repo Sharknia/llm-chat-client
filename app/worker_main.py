@@ -1,5 +1,6 @@
 import asyncio
 import random
+import httpx
 from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -159,6 +160,19 @@ async def job():
     """
     사용자와 연결된 키워드만 불러와 병렬로 처리하고, 결과를 취합하여 메일을 발송합니다.
     """
+
+    # Supabase DB 활성화를 위한 주기적인 호출
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get("https://aijlptoknzteaplgkemr.supabase.co/storage/v1/object/public/common//tuum.ico", timeout=10)
+            response.raise_for_status()  # HTTP 4xx/5xx 에러 발생 시 예외 처리
+            logger.info(f"Supabase keep-alive call successful: {response.status_code}")
+    except httpx.RequestError as e:
+        logger.error(f"Supabase keep-alive call failed due to request error: {e}")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Supabase keep-alive call failed due to HTTP error: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        logger.error(f"Supabase keep-alive call failed: {e}")
 
     keywords_to_process: list[Keyword] = []
     all_users_with_keywords: list[User] = []  # 사용자 정보를 담을 리스트 추가
