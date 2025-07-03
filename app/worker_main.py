@@ -1,5 +1,6 @@
 import asyncio
 import random
+import httpx
 from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -160,6 +161,19 @@ async def job():
     사용자와 연결된 키워드만 불러와 병렬로 처리하고, 결과를 취합하여 메일을 발송합니다.
     """
 
+    # Supabase DB 활성화를 위한 주기적인 호출
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get("https://aijlptoknzteaplgkemr.supabase.co/storage/v1/object/public/common//tuum.ico", timeout=10)
+            response.raise_for_status()  # HTTP 4xx/5xx 에러 발생 시 예외 처리
+            logger.info(f"Supabase keep-alive call successful: {response.status_code}")
+    except httpx.RequestError as e:
+        logger.error(f"Supabase keep-alive call failed due to request error: {e}")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Supabase keep-alive call failed due to HTTP error: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        logger.error(f"Supabase keep-alive call failed: {e}")
+
     keywords_to_process: list[Keyword] = []
     all_users_with_keywords: list[User] = []  # 사용자 정보를 담을 리스트 추가
 
@@ -185,21 +199,20 @@ async def job():
     PROXY_MANAGER.reset_proxies()
     PROXY_MANAGER.fetch_proxies()
 
-    # --- 비동기 작업 병렬 처리로 수정 ---
-    tasks = [handle_keyword(kw) for kw in keywords_to_process]
-    # The result will be a list of `(Keyword, list[CrawledKeyword])` or `None`
-    task_results = await asyncio.gather(*tasks, return_exceptions=True)
-
     id_to_crawled_keyword: dict[Keyword, list[CrawledKeyword]] = {}
 
-    # Process results and build the dictionary
-    for i, res in enumerate(task_results):
-        if isinstance(res, Exception):
-            failed_keyword = keywords_to_process[i]
-            logger.error(f"키워드 '{failed_keyword.title}' 처리 중 오류 발생: {res}")
-        elif res:  # If res is not None
-            keyword, deals = res
-            id_to_crawled_keyword[keyword] = deals
+    for kw in keywords_to_process:
+        try:
+            res = await handle_keyword(kw)
+            if res:
+                keyword, deals = res
+                id_to_crawled_keyword[keyword] = deals
+        except Exception as e:
+            logger.error(f"키워드 '{kw.title}' 처리 중 오류 발생: {e}")
+        finally:
+            # 각 키워드 처리 후 랜덤한 지연을 추가하여 서버 부하를 줄임
+            delay = random.uniform(1, 3)
+            await asyncio.sleep(delay)
 
     logger.info("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
 
