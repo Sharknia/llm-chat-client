@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter
@@ -18,6 +19,8 @@ from app.src.domain.hotdeal.repositories import (
 )
 from app.src.domain.hotdeal.schemas import KeywordResponse
 from app.src.domain.hotdeal.utils import normalize_keyword
+from app.src.domain.user.repositories import get_user_by_id
+from app.src.Infrastructure.mail.mail_manager import send_email
 
 router = APIRouter(prefix="/v1", tags=["hotdeal"])
 
@@ -45,6 +48,28 @@ async def register_keyword(
         await add_my_keyword(db, user_id, keyword.id)
     except:
         raise ClientErrors.DUPLICATE_KEYWORD_REGISTRATION
+
+    # --- 백그라운드에서 이메일 발송 ---
+    user = await get_user_by_id(db, user_id)
+    if user:
+        subject = f"'{title}' 키워드가 등록되었습니다."
+        body = f"""
+        <html>
+        <body>
+            <h2>키워드 등록이 완료되었습니다.</h2>
+            <p>안녕하세요, {user.nickname}님.</p>
+            <p>요청하신 키워드 '<b>{title}</b>'이(가) 성공적으로 등록되었습니다.</p>
+            <p>이제부터 '{title}'에 대한 새로운 핫딜을 찾아 알려드릴게요.</p>
+            <br>
+            <hr>
+            <p><small>본 메일은 발신전용입니다.</small></p>
+        </body>
+        </html>
+        """
+        asyncio.create_task(
+            send_email(subject=subject, to=user.email, body=body, is_html=True)
+        )
+
     return KeywordResponse(
         id=keyword.id,
         title=keyword.title,
