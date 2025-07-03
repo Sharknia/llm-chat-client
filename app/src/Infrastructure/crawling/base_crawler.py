@@ -68,22 +68,29 @@ class BaseCrawler(ABC):
         timeout: int = 100,
     ) -> str | None:
         """프록시를 사용하여 HTML 가져오기."""
-        for proxy in self.proxy_manager.proxies:
+        if not self.proxy_manager.proxies:
+            logger.error("사용할 수 있는 프록시가 없습니다.")
+            return None
+
+        for proxy_url in self.proxy_manager.proxies:
             try:
-                proxies = {"http://": proxy, "https://": proxy}
-                async with httpx.AsyncClient(proxies=proxies) as proxy_client:
+                # 단수형 'proxy' 인자를 사용하여 각 프록시를 순회
+                async with httpx.AsyncClient(proxy=proxy_url) as proxy_client:
                     response = await proxy_client.get(url, timeout=timeout)
 
                     if response.status_code in [403, 430]:
                         logger.warning(
-                            f"프록시 {proxy}에서 {response.status_code} 발생"
+                            f"프록시 {proxy_url}에서 {response.status_code} 발생"
                         )
-                        continue
+                        continue  # 다음 프록시로 계속
                     elif response.status_code == 200:
-                        logger.info(f"프록시 {proxy}로 요청 성공")
+                        logger.info(f"프록시 {proxy_url}로 요청 성공")
                         return response.text
+
             except httpx.RequestError as e:
-                logger.warning(f"프록시 {proxy}로 요청 실패: {e}")
+                logger.warning(f"프록시 {proxy_url}로 요청 실패: {e}")
+                continue  # 다음 프록시로 계속
+
         logger.error("모든 프록시를 사용했지만 요청에 실패했습니다.")
         return None
 
