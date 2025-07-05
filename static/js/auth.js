@@ -9,9 +9,9 @@ function getApiUrl() {
             return 'http://localhost:8000/api';
         }
     } else if (hostname.includes('dev.')) {
-        return 'http://144.24.65.213:8001/api';
+        return 'https://dev-api.tuum.day/api';
     } else {
-        return 'http://144.24.65.213:8000/api';
+        return 'https://api.tuum.day/api';
     }
 }
 
