@@ -58,6 +58,7 @@ PROXY_MANAGER = ProxyManager()
 
 async def handle_keyword(
     keyword: Keyword,
+    client: httpx.AsyncClient,
 ) -> tuple[Keyword, list[CrawledKeyword]] | None:
     """
     단일 키워드를 크롤링하고, 신규 핫딜이 있는 경우 결과를 반환합니다.
@@ -72,6 +73,7 @@ async def handle_keyword(
         crawled_data: list[CrawledKeyword] = await get_new_hotdeal_keywords(
             session=session,
             keyword=keyword,
+            client=client,
         )
 
     if crawled_data:
@@ -87,6 +89,7 @@ async def handle_keyword(
 async def get_new_hotdeal_keywords(
     session: AsyncSession,
     keyword: Keyword,
+    client: httpx.AsyncClient,
 ) -> list[CrawledKeyword]:
     """
     새로운 핫딜 키워드를 조회합니다.
@@ -97,7 +100,7 @@ async def get_new_hotdeal_keywords(
     5. 새로운 핫딜이 없는 경우, 빈 목록을 반환합니다.
     """
     # 1. 크롤링으로 최신 핫딜 목록 가져오기
-    algumon_crawler: BaseCrawler = AlgumonCrawler(keyword=keyword.title)
+    algumon_crawler: BaseCrawler = AlgumonCrawler(keyword=keyword.title, client=client)
     latest_products: list[CrawledKeyword] = await algumon_crawler.fetchparse()
 
     if not latest_products:
@@ -204,18 +207,19 @@ async def job():
     # 동시 실행 개수를 5개로 제한하는 세마포어 생성
     semaphore = asyncio.Semaphore(5)
 
-    # 각 키워드를 세마포어 제어 하에 처리하는 태스크 리스트 생성
-    async def sem_handle_keyword(keyword: Keyword):
-        async with semaphore:
-            # 세마포어 내에서도 짧은 랜덤 딜레이를 주면 부하를 더 분산시킬 수 있습니다.
-            await asyncio.sleep(random.uniform(0.5, 1.5))
-            return await handle_keyword(keyword)
+    async with httpx.AsyncClient() as client:
+        # 각 키워드를 세마포어 제어 하에 처리하는 태스크 리스트 생성
+        async def sem_handle_keyword(keyword: Keyword):
+            async with semaphore:
+                # 세마포어 내에서도 짧은 랜덤 딜레이를 주면 부하를 더 분산시킬 수 있습니다.
+                await asyncio.sleep(random.uniform(0.5, 1.5))
+                return await handle_keyword(keyword, client)
 
-    tasks = [sem_handle_keyword(kw) for kw in keywords_to_process]
+        tasks = [sem_handle_keyword(kw) for kw in keywords_to_process]
 
-    # asyncio.gather로 모든 작업을 동시에 실행 (세마포어가 동시성 제어)
-    # return_exceptions=True를 통해 일부 작업이 실패해도 전체가 중단되지 않도록 함
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+        # asyncio.gather로 모든 작업을 동시에 실행 (세마포어가 동시성 제어)
+        # return_exceptions=True를 통해 일부 작업이 실패해도 전체가 중단되지 않도록 함
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # 결과 처리
     for i, res in enumerate(results):

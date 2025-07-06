@@ -13,10 +13,12 @@ class BaseCrawler(ABC):
     def __init__(
         self,
         keyword: str,
+        client: httpx.AsyncClient,
     ):
         self.keyword = keyword
         self.proxy_manager: ProxyManager = ProxyManager()
         self.results = []
+        self.client = client
 
     @property
     @abstractmethod
@@ -42,25 +44,24 @@ class BaseCrawler(ABC):
         """HTML 가져오기 (프록시 포함)."""
         target_url = url or self.url
         logger.info(f"요청: {target_url}")
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.get(target_url, timeout=timeout)
+        try:
+            response = await self.client.get(target_url, timeout=timeout)
 
-                if response.status_code in [403, 430]:
-                    if response.status_code == 430:
-                        logger.error(f"{response.status_code}: {response.text}")
-                    logger.warning(
-                        f"{response.status_code}: 접근이 차단되었습니다. 프록시로 재시도합니다."
-                    )
-                    return await self._fetch_with_proxy(target_url, timeout)
+            if response.status_code in [403, 430]:
+                if response.status_code == 430:
+                    logger.error(f"{response.status_code}: {response.text}")
+                logger.warning(
+                    f"{response.status_code}: 접근이 차단되었습니다. 프록시로 재시도합니다."
+                )
+                return await self._fetch_with_proxy(target_url, timeout)
 
-                response.raise_for_status()
-                logger.info(f"요청 성공: {target_url}")
-                return response.text
+            response.raise_for_status()
+            logger.info(f"요청 성공: {target_url}")
+            return response.text
 
-            except httpx.RequestError as e:
-                logger.error(f"요청 실패: {e}")
-                return None
+        except httpx.RequestError as e:
+            logger.error(f"요청 실패: {e}")
+            return None
 
     async def _fetch_with_proxy(
         self,
