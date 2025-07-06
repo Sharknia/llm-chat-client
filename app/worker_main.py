@@ -1,8 +1,8 @@
 import asyncio
 import random
-import httpx
 from datetime import datetime
 
+import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import Result, select
@@ -117,8 +117,8 @@ async def get_new_hotdeal_keywords(
     # 3. 새로운 핫딜 필터링
     new_deals: list[CrawledKeyword] = []
     if not last_crawled_site:
-        # 첫 크롤링인 경우, 모든 제품이 새로운 핫딜
-        new_deals = latest_products
+        # 첫 크롤링인 경우, 최신 1개만 새로운 핫딜로 간주
+        new_deals = latest_products[:1]
     else:
         # 마지막으로 크롤링된 핫딜의 인덱스를 찾음
         try:
@@ -167,13 +167,18 @@ async def job():
     # Supabase DB 활성화를 위한 주기적인 호출
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get("https://aijlptoknzteaplgkemr.supabase.co/storage/v1/object/public/common//tuum.ico", timeout=10)
+            response = await client.get(
+                "https://aijlptoknzteaplgkemr.supabase.co/storage/v1/object/public/common//tuum.ico",
+                timeout=10,
+            )
             response.raise_for_status()  # HTTP 4xx/5xx 에러 발생 시 예외 처리
             logger.info(f"Supabase keep-alive call successful: {response.status_code}")
     except httpx.RequestError as e:
         logger.error(f"Supabase keep-alive call failed due to request error: {e}")
     except httpx.HTTPStatusError as e:
-        logger.error(f"Supabase keep-alive call failed due to HTTP error: {e.response.status_code} - {e.response.text}")
+        logger.error(
+            f"Supabase keep-alive call failed due to HTTP error: {e.response.status_code} - {e.response.text}"
+        )
     except Exception as e:
         logger.error(f"Supabase keep-alive call failed: {e}")
 

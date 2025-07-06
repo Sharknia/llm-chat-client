@@ -11,7 +11,7 @@ function getApiUrl() {
     } else if (hostname.includes('dev.')) {
         return 'https://dev-api.tuum.day/api';
     } else {
-        return 'https://api.tuum.day/api';
+        return 'https://api2.tuum.day/api';
     }
 }
 
