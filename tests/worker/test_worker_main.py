@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.src.domain.hotdeal.enums import SiteName
 from app.src.domain.hotdeal.models import Keyword, KeywordSite
 from app.src.domain.hotdeal.schemas import CrawledKeyword
-from app.worker_main import get_new_hotdeal_keywords
+from app.worker_main import get_new_hotdeal_keywords, job
 
 # --- 테스트 데이터 ---
 
@@ -137,3 +137,33 @@ async def test_get_new_hotdeal_keywords_with_new_deals(
             # AND: DB의 external_id가 새로운 핫딜의 ID로 업데이트되어야 함
             await mock_db_session.refresh(old_site_data)
             assert old_site_data.external_id == "101"
+
+
+@pytest.mark.asyncio
+async def test_job_e2e(mock_db_session, keyword_in_db):
+    """E2E 테스트: job 함수가 올바르게 동작하는지 검증"""
+    # GIVEN: DB에 사용자, 키워드, 사용자-키워드 관계 설정
+    from app.src.domain.user.models import User
+    user = User(email="test@example.com", nickname="testuser", hashed_password="hashed_password")
+    user.keywords.append(keyword_in_db)
+    mock_db_session.add(user)
+    await mock_db_session.commit()
+
+    # GIVEN: 크롤링, 메일 발송, DB 조회 모킹
+    with patch("app.worker_main.get_new_hotdeal_keywords", new_callable=AsyncMock) as mock_get_new:
+        with patch("app.worker_main.send_email", new_callable=AsyncMock) as mock_send_email:
+            with patch("app.worker_main.AsyncSessionLocal", return_value=mock_db_session):
+                with patch("app.worker_main.settings.ENVIRONMENT", "prod"):
+
+                    mock_get_new.return_value = CRAWLED_DATA_NEW
+                    mock_send_email.return_value = None  # Ensure the mock returns a completed coroutine
+
+                    # WHEN: job 실행
+                    await job()
+
+                    # THEN: 메일 발송 함수가 올바른 인자와 함께 1회 호출되었는지 확인
+                    mock_send_email.assert_called_once()
+                    args, kwargs = mock_send_email.call_args
+                    assert kwargs["to"] == "test@example.com"
+                    assert "테스트키워드" in kwargs["subject"]
+                    assert "[새상품] 키보드" in kwargs["body"]

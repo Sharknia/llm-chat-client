@@ -234,6 +234,7 @@ async def job():
     logger.info("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
 
     # 사용자별 메일 발송 로직
+    email_tasks = []
     for user in all_users_with_keywords:
         try:
             user_deals: dict[Keyword, list[CrawledKeyword]] = {}
@@ -273,12 +274,13 @@ async def job():
                 subject = f"[{subject}] 새로운 핫딜 알림"
 
                 if settings.ENVIRONMENT == "prod":
-                    await send_email(
+                    task = send_email(
                         subject=subject,
                         to=user.email,
                         body=email_content,
                         is_html=True,
                     )
+                    email_tasks.append(task)
                     # 메일 발송 성공 로그 (선택적)
                     # logger.info(f"사용자 {user.email} 에게 메일 발송 완료.")
                 else:
@@ -293,6 +295,9 @@ async def job():
             logger.error(f"사용자 {user.email} 메일 처리 중 오류 발생: {e}")
             # 다음 사용자로 계속 진행
             continue
+
+    if email_tasks:
+        await asyncio.gather(*email_tasks)
 
     # 작업이 완료되면 지역 변수인 id_to_crawled_keyword는 자동으로 사라집니다.
     logger.info("[INFO] 메일 발송 완료 및 크롤링 결과 초기화")
