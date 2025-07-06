@@ -56,3 +56,12 @@ class ProxyManager:
         """프록시 리스트 초기화."""
         self.proxies = []
         logger.info("프록시 리스트 초기화 완료")
+
+    def remove_proxy(self, proxy_url: str):
+        """특정 프록시를 리스트에서 안전하게 제거."""
+        try:
+            self.proxies.remove(proxy_url)
+            logger.info(f"프록시 제거됨: {proxy_url}")
+        except ValueError:
+            # 다른 작업에 의해 이미 제거된 경우, 조용히 넘어감
+            pass

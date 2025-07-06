@@ -1,4 +1,4 @@
-import smtplib
+import aiosmtplib
 from email.mime.text import MIMEText
 
 from app.src.core.config import settings
@@ -38,15 +38,18 @@ async def send_email(
         msg["From"] = sender
         msg["To"] = to
 
-        with smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
-            server.login(settings.SMTP_EMAIL, settings.SMTP_PASSWORD)
-            server.sendmail(
-                sender,
-                to,
-                msg.as_string(),
-            )
+        await aiosmtplib.send(
+            msg,
+            hostname=settings.SMTP_SERVER,
+            port=settings.SMTP_PORT,
+            use_tls=True,
+            username=settings.SMTP_EMAIL,
+            password=settings.SMTP_PASSWORD,
+            sender=sender,
+            recipients=to,
+        )
 
         # TODO: 메일 전송 로그 남기기
-        logger.info("메일 전송 완료!")
+        logger.info(f"메일 전송 완료! 수신자: {to}")
     except Exception as e:
         logger.error(f"메일 전송 실패: {e}")
