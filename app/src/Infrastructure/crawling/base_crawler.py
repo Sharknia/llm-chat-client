@@ -83,19 +83,15 @@ class BaseCrawler(ABC):
                         logger.warning(
                             f"프록시 {proxy_url}에서 {response.status_code} 발생. 리스트에서 제거합니다."
                         )
-                        self.proxy_manager.proxies.remove(
-                            proxy_url
-                        )  # 실패한 프록시 제거
+                        self.proxy_manager.remove_proxy(proxy_url)
                         continue  # 다음 프록시로 계속
                     elif response.status_code == 200:
                         logger.info(f"프록시 {proxy_url}로 요청 성공")
                         return response.text
 
             except httpx.RequestError as e:
-                logger.warning(
-                    f"프록시 {proxy_url}로 요청 실패: {e}. 리스트에서 제거합니다."
-                )
-                self.proxy_manager.proxies.remove(proxy_url)  # 실패한 프록시 제거
+                logger.warning(f"프록시 {proxy_url}로 요청 실패: {e}. 리스트에서 제거합니다.")
+                self.proxy_manager.remove_proxy(proxy_url)
                 continue  # 다음 프록시로 계속
 
         logger.error("모든 프록시를 사용했지만 요청에 실패했습니다.")
