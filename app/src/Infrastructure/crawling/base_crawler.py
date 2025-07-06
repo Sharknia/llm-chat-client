@@ -69,30 +69,31 @@ class BaseCrawler(ABC):
         timeout: int = 20,
     ) -> str | None:
         """프록시를 사용하여 HTML 가져오기."""
-        if not self.proxy_manager.proxies:
-            logger.error("사용할 수 있는 프록시가 없습니다.")
-            return None
+        for _ in range(15):
+            proxy_url = self.proxy_manager.get_next_proxy()
+            if not proxy_url:
+                logger.error("사용할 수 있는 프록시가 없습니다.")
+                return None
 
-        # 프록시 리스트의 복사본을 순회하여 안전하게 요소를 제거
-        for proxy_url in self.proxy_manager.proxies[:]:
             try:
-                # 단수형 'proxy' 인자를 사용하여 각 프록시를 순회
                 async with httpx.AsyncClient(proxy=proxy_url) as proxy_client:
                     response = await proxy_client.get(url, timeout=timeout)
 
                     if response.status_code in [403, 430]:
                         logger.warning(
-                            f"프록시 {proxy_url}에서 {response.status_code} 발생. 리스트에서 제거합니다."
+                            f"프록시 {proxy_url}에서 {response.status_code} 발생. 실패 목록에 추가합니다."
                         )
-                        self.proxy_manager.remove_proxy(proxy_url)
+                        self.proxy_manager.remove_proxy(proxy_url)  # 실패 목록에 추가
                         continue  # 다음 프록시로 계속
                     elif response.status_code == 200:
                         logger.info(f"프록시 {proxy_url}로 요청 성공")
                         return response.text
 
             except httpx.RequestError as e:
-                logger.warning(f"프록시 {proxy_url}로 요청 실패: {e}. 리스트에서 제거합니다.")
-                self.proxy_manager.remove_proxy(proxy_url)
+                logger.warning(
+                    f"프록시 {proxy_url}로 요청 실패: {e}. 실패 목록에 추가합니다."
+                )
+                self.proxy_manager.remove_proxy(proxy_url)  # 실패 목록에 추가
                 continue  # 다음 프록시로 계속
 
         logger.error("모든 프록시를 사용했지만 요청에 실패했습니다.")
