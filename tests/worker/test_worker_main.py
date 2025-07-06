@@ -1,3 +1,4 @@
+import httpx
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -70,21 +71,21 @@ async def test_get_new_hotdeal_keywords_first_crawl(
         "app.worker_main.AlgumonCrawler.fetchparse", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = CRAWLED_DATA_NEW
+        async with httpx.AsyncClient() as client:
+            # WHEN: 새로운 핫딜을 조회
+            new_deals = await get_new_hotdeal_keywords(mock_db_session, keyword_in_db, client)
 
-        # WHEN: 새로운 핫딜을 조회
-        new_deals = await get_new_hotdeal_keywords(mock_db_session, keyword_in_db)
+            # THEN: 모든 결과가 반환되어야 함
+            assert len(new_deals) == 3
+            assert new_deals[0].id == "101"
 
-        # THEN: 모든 결과가 반환되어야 함
-        assert len(new_deals) == 3
-        assert new_deals[0].id == "101"
+            # AND: 첫 번째 결과가 DB에 저장되어야 함
+            stmt = select(KeywordSite).where(KeywordSite.keyword_id == keyword_in_db.id)
+            result = await mock_db_session.execute(stmt)
+            saved_site = result.scalars().one()
 
-        # AND: 첫 번째 결과가 DB에 저장되어야 함
-        stmt = select(KeywordSite).where(KeywordSite.keyword_id == keyword_in_db.id)
-        result = await mock_db_session.execute(stmt)
-        saved_site = result.scalars().one()
-
-        assert saved_site is not None
-        assert saved_site.external_id == "101"
+            assert saved_site is not None
+            assert saved_site.external_id == "101"
 
 
 @pytest.mark.asyncio
@@ -101,12 +102,12 @@ async def test_get_new_hotdeal_keywords_no_new_deals(
         "app.worker_main.AlgumonCrawler.fetchparse", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = CRAWLED_DATA_NO_NEW
+        async with httpx.AsyncClient() as client:
+            # WHEN: 새로운 핫딜을 조회
+            new_deals = await get_new_hotdeal_keywords(mock_db_session, keyword, client)
 
-        # WHEN: 새로운 핫딜을 조회
-        new_deals = await get_new_hotdeal_keywords(mock_db_session, keyword)
-
-        # THEN: 빈 리스트가 반환되어야 함
-        assert len(new_deals) == 0
+            # THEN: 빈 리스트가 반환되어야 함
+            assert len(new_deals) == 0
 
 
 @pytest.mark.asyncio
@@ -123,16 +124,16 @@ async def test_get_new_hotdeal_keywords_with_new_deals(
         "app.worker_main.AlgumonCrawler.fetchparse", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = CRAWLED_DATA_NEW
+        async with httpx.AsyncClient() as client:
+            # WHEN: 새로운 핫딜을 조회
+            new_deals = await get_new_hotdeal_keywords(mock_db_session, keyword, client)
 
-        # WHEN: 새로운 핫딜을 조회
-        new_deals = await get_new_hotdeal_keywords(mock_db_session, keyword)
+            # THEN: 새로운 핫딜 2개만 반환되어야 함 (기존 103 제외)
+            assert len(new_deals) == 2
+            assert new_deals[0].id == "101"
+            assert new_deals[1].id == "102"
+            assert not any(deal.id == "103" for deal in new_deals)
 
-        # THEN: 새로운 핫딜 2개만 반환되어야 함 (기존 103 제외)
-        assert len(new_deals) == 2
-        assert new_deals[0].id == "101"
-        assert new_deals[1].id == "102"
-        assert not any(deal.id == "103" for deal in new_deals)
-
-        # AND: DB의 external_id가 새로운 핫딜의 ID로 업데이트되어야 함
-        await mock_db_session.refresh(old_site_data)
-        assert old_site_data.external_id == "101"
+            # AND: DB의 external_id가 새로운 핫딜의 ID로 업데이트되어야 함
+            await mock_db_session.refresh(old_site_data)
+            assert old_site_data.external_id == "101"
