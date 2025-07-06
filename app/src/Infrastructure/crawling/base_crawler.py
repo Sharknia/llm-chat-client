@@ -43,7 +43,7 @@ class BaseCrawler(ABC):
     ) -> str | None:
         """HTML 가져오기 (프록시 포함)."""
         target_url = url or self.url
-        logger.info(f"요청: {target_url}")
+        logger.info(f"[{self.keyword}] 요청: {target_url}")
         try:
             response = await self.client.get(target_url, timeout=timeout)
 
@@ -56,11 +56,11 @@ class BaseCrawler(ABC):
                 return await self._fetch_with_proxy(target_url, timeout)
 
             response.raise_for_status()
-            logger.info(f"요청 성공: {target_url}")
+            logger.info(f"[{self.keyword}] 요청 성공: {target_url}")
             return response.text
 
         except httpx.RequestError as e:
-            logger.error(f"요청 실패: {e}")
+            logger.error(f"[{self.keyword}] 요청 실패: {e}")
             return None
 
     async def _fetch_with_proxy(
@@ -96,7 +96,7 @@ class BaseCrawler(ABC):
                 self.proxy_manager.remove_proxy(proxy_url)  # 실패 목록에 추가
                 continue  # 다음 프록시로 계속
 
-        logger.error("모든 프록시를 사용했지만 요청에 실패했습니다.")
+        logger.error(f"[{self.keyword}] 모든 프록시를 사용했지만 요청에 실패했습니다.")
         return None
 
     async def fetchparse(
@@ -107,5 +107,5 @@ class BaseCrawler(ABC):
         if html:
             self.results = self.parse(html)
         else:
-            logger.error(f"크롤링 실패: {self.url}")
+            logger.error(f"[{self.keyword}] 크롤링 실패: {self.url}")
         return self.results

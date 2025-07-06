@@ -67,7 +67,7 @@ async def handle_keyword(
     delay = random.uniform(1, 5)
     await asyncio.sleep(delay)
 
-    logger.info(f"[INFO] 키워드 처리: {keyword.title}")
+    logger.info(f"[INFO] 키워드 처리: [{keyword.title}]")
 
     async with AsyncSessionLocal() as session:
         crawled_data: list[CrawledKeyword] = await get_new_hotdeal_keywords(
@@ -78,11 +78,11 @@ async def handle_keyword(
 
     if crawled_data:
         logger.info(
-            f"[INFO] 키워드 처리: {keyword.title} 신규 핫딜 {len(crawled_data)}건 발견"
+            f"[INFO] 키워드 처리: [{keyword.title}] 신규 핫딜 {len(crawled_data)}건 발견"
         )
         return keyword, crawled_data
     else:
-        logger.info(f"[INFO] 키워드 처리: {keyword.title} 크롤링 결과 없음")
+        logger.info(f"[INFO] 키워드 처리: [{keyword.title}] 크롤링 결과 없음")
         return None
 
 
@@ -226,7 +226,7 @@ async def job():
         if isinstance(res, Exception):
             # 실패한 경우, 어떤 키워드에서 오류가 났는지 로깅
             failed_keyword = keywords_to_process[i]
-            logger.error(f"키워드 '{failed_keyword.title}' 처리 중 오류 발생: {res}")
+            logger.error(f"키워드 '[{failed_keyword.title}]' 처리 중 오류 발생: {res}")
         elif res:
             keyword, deals = res
             id_to_crawled_keyword[keyword] = deals
