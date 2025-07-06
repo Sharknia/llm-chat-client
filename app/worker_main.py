@@ -201,18 +201,31 @@ async def job():
 
     id_to_crawled_keyword: dict[Keyword, list[CrawledKeyword]] = {}
 
-    for kw in keywords_to_process:
-        try:
-            res = await handle_keyword(kw)
-            if res:
-                keyword, deals = res
-                id_to_crawled_keyword[keyword] = deals
-        except Exception as e:
-            logger.error(f"키워드 '{kw.title}' 처리 중 오류 발생: {e}")
-        finally:
-            # 각 키워드 처리 후 랜덤한 지연을 추가하여 서버 부하를 줄임
-            delay = random.uniform(1, 3)
-            await asyncio.sleep(delay)
+    # 동시 실행 개수를 5개로 제한하는 세마포어 생성
+    semaphore = asyncio.Semaphore(5)
+
+    # 각 키워드를 세마포어 제어 하에 처리하는 태스크 리스트 생성
+    async def sem_handle_keyword(keyword: Keyword):
+        async with semaphore:
+            # 세마포어 내에서도 짧은 랜덤 딜레이를 주면 부하를 더 분산시킬 수 있습니다.
+            await asyncio.sleep(random.uniform(0.5, 1.5))
+            return await handle_keyword(keyword)
+
+    tasks = [sem_handle_keyword(kw) for kw in keywords_to_process]
+
+    # asyncio.gather로 모든 작업을 동시에 실행 (세마포어가 동시성 제어)
+    # return_exceptions=True를 통해 일부 작업이 실패해도 전체가 중단되지 않도록 함
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # 결과 처리
+    for i, res in enumerate(results):
+        if isinstance(res, Exception):
+            # 실패한 경우, 어떤 키워드에서 오류가 났는지 로깅
+            failed_keyword = keywords_to_process[i]
+            logger.error(f"키워드 '{failed_keyword.title}' 처리 중 오류 발생: {res}")
+        elif res:
+            keyword, deals = res
+            id_to_crawled_keyword[keyword] = deals
 
     logger.info("[INFO] 모든 키워드 크롤링 완료. 메일 발송 시작...")
 
